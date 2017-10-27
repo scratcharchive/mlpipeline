@@ -1,0 +1,626 @@
+function MainWindow(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('MainWindow');
+
+	this.loadFromBrowserStorage=function(doc_name,promptsave,callback) {load_from_browser_storage(doc_name,promptsave,callback);};
+	this.loadFromConfigUrl=function(config_url,promptsave,callback) {load_from_config_url(config_url,promptsave,callback);};
+	//this.loadFromDefaultStorageIfPresent=function() {load_from_default_storage_if_present();};
+	this.loadFromFile=function() {load_from_file();};
+	this.loadFromGoogleDrive=function() {load_from_google_drive();};
+	this.setDocumentName=function(name) {setDocumentName(name);};
+	this.documentName=function() {return m_document.documentName();}; 
+	this.changesHaveBeenSaved=function() {return changesHaveBeenSaved();};
+	this.setProcessingServerName=function(name) {m_document.setProcessingServerName(name);};
+	this.loadFromProcessingServer=function(userid,filename,promptsave,callback) {load_from_processing_server(userid,filename,promptsave,callback);};
+	this.loginWithLastSuccessful=function(callback) {m_kulele_client.loginWithLastSuccessful(callback);};
+	this.setLoadingMessage=function(msg) {set_loading_message(msg);};
+	this.kuleleClient=function() {return m_kulele_client;};
+	this.registerPlugin=function(info) {m_main_menu.registerPlugin(info);}; 
+	this.findPrvByName=function(name) {return findPrvByName(name);};
+	this.registerViewPlugin=function(VP) {m_input_file_widget.registerViewPlugin(VP); m_output_file_widget.registerViewPlugin(VP);};
+
+	var m_processing_server_document_info={};
+
+	// Set up the kulele client
+	var m_kulele_client=new KuleleClient();
+
+	var processor_manager=new ProcessorManager();
+	m_kulele_client.setProcessorManager(processor_manager);
+    //m_kulele_client.login('anonymous',function() {});
+
+    var m_document=new MLPDocument();
+    m_document.inputFileManager().setKuleleClient(m_kulele_client);
+    m_document.outputFileManager().setKuleleClient(m_kulele_client);
+    m_document.setDocumentName('default');
+
+    JSQ.connect(m_document,'processing_server_name_changed',O,on_processing_server_name_changed);
+
+    var m_edit_pipeline_widget=new EditMLPipelineWidget(0,processor_manager);
+    //var m_view_list_widget=new ViewListWidget(0,pipeline0.prvListManager());
+    
+    var pipeline_list_manager=m_document.pipelineListManager();
+    var m_pipeline_list_widget=new MLPipelineListWidget(0,pipeline_list_manager);
+    var m_job_manager=new JobManager();
+    m_job_manager.setDocument(m_document);
+    m_job_manager.setKuleleClient(m_kulele_client);
+    m_job_manager.setProcessorManager(processor_manager);
+    m_document.setJobManager(m_job_manager);
+
+    m_edit_pipeline_widget.setJobManager(m_job_manager);
+
+    var input_file_manager=m_document.inputFileManager();
+    var m_input_file_widget=new PrvListWidget(0,input_file_manager);
+    m_input_file_widget.setLabel1('Input files');
+    m_input_file_widget.setUploadsAllowed(true);
+    m_input_file_widget.setKuleleClient(m_kulele_client);
+    JSQ.connect(m_input_file_widget,'open_banjoview',O,function(sender,args) {open_banjoview(args.prvrec);});
+    JSQ.connect(m_input_file_widget,'view_text_file',O,function(sender,args) {view_text_file(args.name,args.prvrec);});
+    JSQ.connect(m_input_file_widget,'download-s3-file-to-processing-server',O,function(sender,args) {download_s3_file_to_processing_server(args);});
+
+    var output_file_manager=m_document.outputFileManager();
+    var m_output_file_widget=new PrvListWidget(0,output_file_manager);
+    m_output_file_widget.setRemoveAllowed(false);
+    m_output_file_widget.setLabel1('Output files');
+    JSQ.connect(m_output_file_widget,'open_banjoview',O,function(sender,args) {open_banjoview(args.prvrec);});
+    JSQ.connect(m_output_file_widget,'view_text_file',O,function(sender,args) {view_text_file(args.name,args.prvrec);});
+    JSQ.connect(m_output_file_widget,'download-s3-file-to-processing-server',O,function(sender,args) {download_s3_file_to_processing_server(args);});
+
+    JSQ.connect(m_edit_pipeline_widget,'start_job',O,function(sender,args) {start_job(args.step,m_pipeline_list_widget.currentPipeline().name());});;
+    JSQ.connect(m_edit_pipeline_widget,'stop_job',O,function(sender,args) {stop_job(args.job);});;
+
+    // Create the main pipeline
+    var main_pipeline=new MLPipeline();
+    main_pipeline.setName('main');
+    pipeline_list_manager.addPipeline(main_pipeline);
+    m_pipeline_list_widget.setCurrentPipeline(main_pipeline);
+    JSQ.connect(m_pipeline_list_widget,'current_pipeline_changed',O,on_current_pipeline_changed);
+
+    JSQ.connect(m_pipeline_list_widget,'current_pipeline_changed',O,update_output_files);
+    JSQ.connect(m_job_manager,'job_status_changed',O,update_output_files);
+    
+    var m_status_bar=new StatusBar();
+    m_status_bar.setJobManager(m_job_manager);
+    m_status_bar.setKuleleClient(m_kulele_client);
+
+    var m_main_menu=new MainMenu();
+
+    O.onKeyPress(function(event) {
+    	console.log('onKeyPress');
+    	console.log(event);
+    	m_main_menu.handleKeyPress(event);
+    });
+
+    var m_loading_message=new LoadingMessageWidget();
+    m_loading_message.setParent(O);
+
+    m_edit_pipeline_widget.setParent(O);
+    m_pipeline_list_widget.setParent(O);
+    m_input_file_widget.setParent(O);
+    m_output_file_widget.setParent(O);
+    m_status_bar.setParent(O);
+    m_main_menu.setParent(O);
+
+
+    JSQ.connect(m_status_bar,'set_processing_server',O,function() {select_processing_server();});
+    JSQ.connect(m_status_bar,'set_user_id',O,function() {login_using_passcode();});
+
+    JSQ.connect(m_main_menu,'import_pipelines_from_repo',O,function() {import_pipelines_from_repo();});
+
+    JSQ.connect(m_main_menu,'login_using_google',O,function() {login_using_google();});
+    JSQ.connect(m_main_menu,'login_using_passcode',O,function() {login_using_passcode();});
+
+    JSQ.connect(m_main_menu,'new_document',O,function() {new_document();});
+    JSQ.connect(m_main_menu,'save_to_browser_storage',O,function() {save_to_browser_storage();});
+    JSQ.connect(m_main_menu,'load_from_browser_storage',O,function() {load_from_browser_storage(null,null,function(tmp) {if (!tmp.success) alert(tmp.error);});});
+    JSQ.connect(m_main_menu,'save_to_file',O,function() {save_to_file();});
+    JSQ.connect(m_main_menu,'load_from_file',O,function() {load_from_file();});
+    JSQ.connect(m_main_menu,'save_to_processing_server',O,function() {save_to_processing_server();});
+    JSQ.connect(m_main_menu,'load_from_processing_server',O,function() {load_from_processing_server();});
+    JSQ.connect(m_main_menu,'save_to_google_drive',O,function() {save_to_google_drive();});
+    JSQ.connect(m_main_menu,'load_from_google_drive',O,function() {load_from_google_drive();});
+    JSQ.connect(m_main_menu,'get_temporary_shareable_link',O,function() {get_temporary_shareable_link();});
+
+    JSQ.connect(m_main_menu,'select_processing_server',O,function() {select_processing_server();});
+    JSQ.connect(m_main_menu,'advanced_configuration',O,function() {advanced_configuration();});
+
+	JSQ.connect(O,'sizeChanged',O,update_layout);
+	function update_layout() {
+		var W=O.width();
+		var H=O.height();
+
+		var W1=250;
+		var W2=Math.min(500,Math.max(100,W/4));
+		var Hmenu=45;
+		var Hstatus=20;
+
+		m_main_menu.setGeometry(0,0,W-0*2,Hmenu);
+		//m_tab_widget.setGeometry(0,Hmenu,W,H-Hstatus-Hmenu-0);
+		m_edit_pipeline_widget.setGeometry(0+W1,Hmenu,W-W1-W2,H-Hstatus-Hmenu);
+		m_pipeline_list_widget.setGeometry(0,Hmenu,W1,H-Hstatus-Hmenu);
+		var Ha=(H-Hstatus-Hmenu)/2;
+		m_input_file_widget.setGeometry(W-W2,Hmenu,W2,Ha);
+		m_output_file_widget.setGeometry(W-W2,Hmenu+Ha,W2,Ha);
+		m_status_bar.setGeometry(0,H-Hstatus,W,Hstatus);
+
+		m_loading_message.setGeometry(0,0,W,H);
+	}
+
+	function set_loading_message(msg) {
+		if (m_loading_message.message()==msg) return;
+		m_loading_message.setMessage(msg);
+		var val=(m_loading_message.message()=='');
+		m_status_bar.setVisible(val);
+		m_main_menu.setVisible(val);
+		m_edit_pipeline_widget.setVisible(val);
+		m_input_file_widget.setVisible(val);
+		m_output_file_widget.setVisible(val);
+		m_pipeline_list_widget.setVisible(val);
+		m_loading_message.setVisible(!val);
+		update_layout();
+	}
+
+	function on_current_pipeline_changed() {
+		var P=m_pipeline_list_widget.currentPipeline();
+		m_edit_pipeline_widget.setPipeline(P||(new MLPipeline()));
+	}
+
+	function get_document_object() {
+		var obj=m_document.toObject();
+		return obj;
+	}
+
+	function load_from_document_object(obj) {
+		m_document.fromObject(obj);
+		if (pipeline_list_manager.pipelineCount()>0) {
+			m_pipeline_list_widget.setCurrentPipeline(pipeline_list_manager.pipeline(0));
+		}
+		on_current_pipeline_changed();
+		//m_kulele_client.setSubserverName(m_document.processingServerName());
+		m_last_saved_document_object=m_document.toObject();
+	}
+
+	function load_from_file() {
+		if (!O.changesHaveBeenSaved()) {
+			if (!confirm('You may lose your unsaved changes. Continue?')) return;
+		}
+		var UP=new FileUploader();
+		UP.uploadTextFile({},function(tmp) {
+			if (!tmp.success) {
+				alert('Unexpected problem: '+tmp.error);
+				return;
+			}
+			var obj=jsu_parse_json(tmp.text);
+			if (!obj) {
+				alert('Error parsing json content');
+				return;
+			}
+			load_from_document_object(obj);
+			O.setDocumentName(remove_mlp_suffix((tmp.file_name||'default')));
+			m_status_bar.setLastAction('Loaded from file.',5000);
+		});
+	}
+
+	function save_to_file() {
+		if (!check_ok_to_save()) return;
+		var doc_name=prompt('Name of JSON document:',(m_document.documentName()||'default')+'.mlp');
+		var obj=get_document_object();
+		download(JSON.stringify(obj),doc_name);
+		setDocumentName(remove_mlp_suffix(doc_name));
+		m_last_saved_document_object=m_document.toObject();
+		m_status_bar.setLastAction('Saved to file.',5000);
+	}
+
+	function load_from_processing_server(userid,doc_name,promptsave,callback) {
+		if (promptsave!==false) {
+			if (!O.changesHaveBeenSaved()) {
+				if (!confirm('You may lose your unsaved changes. Continue?')) {
+					if (callback) callback({success:false});
+					return;
+				}
+			}
+		}
+		if (!doc_name) {
+			doc_name=prompt('Name of document in user storage of processing server:',(m_document.documentName()||'default')+".mlp");
+		}
+		if (!doc_name) {
+			if (callback) callback({success:false});
+			return;
+		}
+		set_loading_message('Loading document from user storage...');
+		if (!userid) userid=m_kulele_client.userId();
+		m_kulele_client.prvLocateInUserStorage(userid,doc_name,function(tmp) {
+			if (!tmp.success) {
+				alert('Problem: '+tmp.error);
+				finalize({success:false});
+				return;
+			}
+			if (!tmp.found) {
+				alert('File not found in user storage for '+m_kulele_client.userId()+' on processing server: '+doc_name);
+				finalize({success:false});
+				return;
+			}
+			var url0=tmp.url;
+			jsu_http_get_json(url0,m_kulele_client.authorizationHeaders(),function(tmp2) {
+				if (!tmp2.success) {
+					alert('Problem retrieving document: '+tmp2.error);
+					finalize({success:false});
+					return;
+				}
+				load_from_document_object(tmp2.object);		
+				O.setDocumentName(remove_mlp_suffix(doc_name));
+				finalize({success:true});
+				m_status_bar.setLastAction('Loaded document from processing server.',5000);
+			});
+		});
+		function finalize(ret) {
+			set_loading_message('');
+			if (callback) callback(ret);
+			callback=0;
+		}
+	}
+
+	function save_to_processing_server() {
+		if (!check_ok_to_save()) return;
+		var doc_name=prompt('Give the document a name for future retrieval:',(m_document.documentName()||'default')+'.mlp');
+		if (!doc_name) return;
+		var obj=get_document_object();
+		set_loading_message('Saving to user storage on processing server...');
+		m_kulele_client.prvUploadTextToUserStorage(m_kulele_client.userId(),doc_name,JSON.stringify(obj),function(tmp) {
+			set_loading_message('');
+			if (!tmp.success) {
+				alert('Problem uploading to user storage: '+tmp.error);
+				return;
+			}
+			setDocumentName(remove_mlp_suffix(doc_name));
+			m_last_saved_document_object=m_document.toObject();
+			m_status_bar.setLastAction('Document saved to processing server.',5000);
+		});
+	}
+
+	function save_to_browser_storage() {
+		if (!check_ok_to_save()) return;
+		var doc_name=prompt('Give the document a name for future retrieval (warning: browser storage is temporary):',m_document.documentName()||'default');
+		if (!doc_name) return;
+		var obj=get_document_object();
+		var LS=new LocalStorage();
+		LS.writeObject('mlpdoc--'+doc_name,obj);
+		setDocumentName(remove_mlp_suffix(doc_name));
+		m_last_saved_document_object=m_document.toObject();
+		m_status_bar.setLastAction('Document saved to browser storage.',5000);
+	}
+
+	function check_ok_to_save() {
+		if (m_edit_pipeline_widget.editorIsDirty()) {
+			if (confirm('Update editor prior to saving? (If you answer no the document will not be saved')) {
+				m_edit_pipeline_widget.updateFromEditors();
+				return true;
+			}
+			else
+				return false;
+		}
+		return true;
+	}
+
+	function setDocumentName(name) {
+		m_document.setDocumentName(name);
+		update_document_name_in_status();
+	}
+
+	function new_document(promptsave,callback) {
+		if (promptsave!=false) {
+			if (!O.changesHaveBeenSaved()) {
+				if (!confirm('You may lose your unsaved changes. Continue?')) {
+					if (callback) callback({success:false});
+					return;
+				}
+			}
+		}
+		load_from_document_object({});
+		O.setDocumentName('untitled');
+		if (callback) callback({success:true});
+		m_status_bar.setLastAction('Opened new document.',5000);
+	}
+
+	function load_from_browser_storage(doc_name,promptsave,callback) {
+		if (promptsave!=false) {
+			if (!O.changesHaveBeenSaved()) {
+				if (!confirm('You may lose your unsaved changes. Continue?')) {
+					if (callback) callback({success:false});
+					return;
+				}
+			}
+		}
+		if (!doc_name) {
+			doc_name=prompt('Name of document in browser storage:',m_document.documentName()||'default');
+		}
+		if (!doc_name) {
+			if (callback) callback({success:false});
+			return;
+		}
+		set_loading_message('Loading from browser storage...');
+		setTimeout(function() {
+			var LS=new LocalStorage();
+			var obj=LS.readObject('mlpdoc--'+doc_name);
+			if (!obj) {
+				if (callback) callback({success:false,error:'Unable to load from local storage: '+doc_name});
+				set_loading_message('');
+				return;
+			}
+			load_from_document_object(obj);
+			O.setDocumentName(remove_mlp_suffix(doc_name));
+			if (callback) callback({success:true});
+			set_loading_message('');
+			m_status_bar.setLastAction('Document loaded from browser storage.',5000);
+		},10);
+	}
+
+	function save_to_google_drive() {
+		if (!check_ok_to_save()) return;
+		var doc_name=prompt('Give the document a name for future retrieval (warning: browser storage is temporary):',(m_document.documentName()||'default')+'.mlp');
+		if (!doc_name) return;
+		var obj=get_document_object();
+
+		url4text(JSON.stringify(obj),function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				return;
+			}
+			var dlg=new SaveToGoogleDriveDlg();
+			dlg.setSourceUrl(tmp.url);
+			dlg.setFileName(doc_name);
+			dlg.setSiteName('This web page');
+			dlg.show();	
+			setDocumentName(remove_mlp_suffix(doc_name));
+			m_last_saved_document_object=m_document.toObject();
+		});
+	}
+
+	function changesHaveBeenSaved() {
+		if (m_edit_pipeline_widget.editorIsDirty()) return false;
+		return (JSON.stringify(m_last_saved_document_object)==JSON.stringify(m_document.toObject()));
+	}
+
+	function load_from_google_drive() {
+		if (!O.changesHaveBeenSaved()) {
+			if (!confirm('You may lose your unsaved changes. Continue?')) return;
+		}
+		var L=new GoogleDriveFileLoader();
+		L.loadTextFile({},function(tmp) {
+			if (tmp.text) {
+				var obj=jsu_parse_json(tmp.text);
+				if (!obj) {
+					console.log (tmp);
+					alert('Error parsing json content.')
+					return;
+				}
+				load_from_document_object(obj);
+				O.setDocumentName(remove_mlp_suffix(tmp.file_name||'default'));
+			}
+			else {
+				console.log (tmp);
+				console.error('Error loading from google drive.');
+			}
+		});
+	}
+
+	function load_from_config_url(url,promptsave,callback) {
+		jsu_http_get_json(url,{},function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				if (callback) callback({success:false});
+				return;
+			}
+			load_from_document_object(tmp.object);
+			if (callback) callback({success:true});
+			m_status_bar.setLastAction('Document loaded from config url.',5000);
+		});
+	}
+
+	function get_temporary_shareable_link() {
+		var obj=get_document_object();
+		url4text(JSON.stringify(obj),function(tmp) {
+			if (!tmp.success) {
+				alert(tmp.error);
+				return;
+			}
+			var url0='https://mlstatic.herokuapp.com/mlpipeline?load='+btoa(tmp.url);
+			alert(url0);
+		});
+	}
+
+	function update_output_files() {
+		schedule_update_output_files();
+	}
+
+	var s_update_output_files_scheduled=false;
+	function schedule_update_output_files() {
+		if (s_update_output_files_scheduled) return;
+		s_update_output_files_scheduled=true;
+		setTimeout(function() {
+			s_update_output_files_scheduled=false;
+			do_update_output_files();
+		},2000);
+	}
+	function do_update_output_files() {
+		output_file_manager.clearPrvRecords();
+		var pipeline0=m_pipeline_list_widget.currentPipeline();
+		if (!pipeline0) return;
+		if (!pipeline0.isPipelineScript()) {
+			for (var i=0; i<pipeline0.stepCount(); i++) {
+				var step=pipeline0.step(i);
+				var job=m_job_manager.findLastJobForStep(pipeline0.name(),step);
+				if (job) {
+					if (job.status()=='finished') {
+						var output_files=job.outputFiles();
+						for (var okey in output_files) {
+							if (step.outputs[okey]) {
+								output_file_manager.setPrvRecord(step.outputs[okey],output_files[okey]);
+							}
+						}
+					}
+				}
+			}
+		}
+		output_file_manager.checkOnServer();
+	}
+
+	function open_banjoview(prvrec) {
+		m_kulele_client.prvLocate(prvrec.prv,function(tmp) {
+			if (!tmp.success) {
+				alert('Problem locating file on server: '+tmp.error);
+				return;
+			}
+			var url0='../banjoview?load='+btoa(tmp.url);
+			window.open(url0,'_blank');
+			m_status_bar.setLastAction('Banjoview opened in new tab.',5000);
+		});
+	}
+
+	function view_text_file(name,prvrec) {
+		//todo: implement m_kulele_client.prvDownloadContent, or something
+		m_kulele_client.prvLocate(prvrec.prv,function(tmp) {
+			if (!tmp.success) {
+				alert('Problem locating file on server: '+tmp.error);
+				return;
+			}
+			var url0=tmp.url;
+			jsu_http_get_text(url0,{},function(tmp) {
+				if (!tmp.success) {
+					alert('Problem downloading file: '+tmp.error);
+					return;
+				}
+				var W=new TextFileWindow();
+				W.setTitle(name);
+				W.setText(tmp.text);
+				W.show();
+			});
+		});
+	}
+
+	function download_s3_file_to_processing_server(args) {
+		m_ps_download_manager.start({"s3_address":args.s3_address,"sha1":args.sha1});
+	}
+
+	function start_job(step,parent_pipeline_name) {
+		m_job_manager.startJobFromStep(step,parent_pipeline_name,function() {
+			m_status_bar.setLastAction('Started job.',5000);
+		});
+	}
+	function stop_job(job) {
+		job.stop();
+	}
+
+	function on_processing_server_name_changed() {
+		m_kulele_client.setSubserverName(m_document.processingServerName());
+		processor_manager.setSpec({});
+		m_kulele_client.getProcessorSpec(function(tmp) {
+			if (tmp.success) {
+				processor_manager.setSpec(tmp.spec);
+				m_status_bar.refresh();
+			}
+		});
+		m_status_bar.refresh();
+	}
+
+	function select_processing_server() {
+		var processing_server_name=prompt('Processing server name:',m_kulele_client.subserverName());
+		if (processing_server_name) {
+			m_document.setProcessingServerName(processing_server_name);
+		}
+	}
+
+	function advanced_configuration() {
+		var kulele_url=prompt('Kulele url:',m_kulele_client.kuleleUrl());
+		var cordion_url=prompt('Cordion url:',m_kulele_client.cordionUrl());
+		if ((kulele_url)&&(cordion_url)) {
+			m_kulele_client.setKuleleUrl(kulele_url);
+			m_kulele_client.setCordionUrl(cordion_url);
+			m_edit_pipeline_widget.refresh();
+		}
+	}
+
+	function login_using_google() {
+		var dlg=new GoogleLogInDlg();
+		dlg.show();	
+		JSQ.connect(dlg,'accepted',O,function(sender,args) {
+			m_kulele_client.login({google_id_token:args.id_token},function(tmp) {
+				if (!tmp.success) {
+					alert('Problem logging in: '+tmp.error);
+				}
+			});
+		});
+	}
+
+	function login_using_passcode() {
+		var passcode=prompt('Passcode:');
+		if (!passcode) return;
+		m_kulele_client.login({passcode:passcode},function(tmp) {
+			if (!tmp.success) {
+				alert('Problem logging in: '+tmp.error);
+			}
+		});
+	}
+
+	function remove_mlp_suffix(fname) {
+		var ret=fname;
+		if (jsu_ends_with(ret,'.mlp')) {
+			ret=ret.slice(0,ret.length-('.mlp').length);
+		}
+		return ret;
+	}
+
+	function import_pipelines_from_repo() {
+		var dlg=new ImportPipelinesDialog();
+		dlg.show();
+		JSQ.connect(dlg,'accepted',O,function(sender,args) {
+			for (var i=0; i<dlg.pipelineCount(); i++) {
+				var pipeline_obj=dlg.pipelineObject(i);
+				var pipeline0;
+				if (pipeline_obj.script)
+					pipeline0=new MLPipelineScript();
+				else
+					pipeline0=new MLPipeline();
+				pipeline0.setObject(pipeline_obj);
+				m_document.pipelineListManager().addPipeline(pipeline0);
+			}
+			m_status_bar.setLastAction(dlg.pipelineCount()+' pipelines imported.',5000);
+		});
+	}
+	function findPrvByName(name) {
+		return input_file_manager.prv(name)||output_file_manager.prv(name)||null;
+	}
+
+	function update_document_name_in_status() {
+		m_status_bar.setDocumentName(m_document.documentName());
+	}
+	update_document_name_in_status();
+
+	update_layout();
+	
+	var default_processing_node='river';
+	if (!m_kulele_client.subserverName()) {
+		//select_processing_server();	
+		m_document.setProcessingServerName(default_processing_node);
+		//m_kulele_client.setSubserverName(m_document.processingServerName());
+	}
+
+	on_current_pipeline_changed();
+
+	var m_last_saved_document_object=m_document.toObject();
+}
+
+function LoadingMessageWidget(O) {
+	O=O||this;
+	JSQWidget(O);
+	O.div().addClass('LoadingMessageWidget');
+
+	this.setMessage=function(msg) {m_message=msg; refresh();};
+	this.message=function() {return m_message;};
+
+	var m_message='';
+
+	function refresh() {
+		O.div().html('<h2>'+m_message+'</h2>');
+	}
+}
