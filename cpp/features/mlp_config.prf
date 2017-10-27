@@ -1,0 +1,6 @@
+macx:CONFIG -= app_bundle
+
+#configure directories
+MLP_DIR=$$clean_path($${PWD}/../..)
+MLP_CPPDIR=$${ML_DIR}/cpp
+MLP_BINDIR=$${ML_DIR}/bin
