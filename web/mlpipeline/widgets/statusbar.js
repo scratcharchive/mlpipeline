@@ -59,8 +59,7 @@ function StatusBar(O) {
 		}
 		var strlist=[];
 		for (var i=0; i<X.length; i++) {
-			var step0=X[i].step();
-			strlist.push(step0.processor_name||step0.pipeline_name||'*');
+			strlist.push(X[i].processorName()||X[i].pipelineName()||'*');
 		}
 		var str0=strlist.join(', ');
 		if (num_pending>0) str0+=' ('+num_pending+' pending)';

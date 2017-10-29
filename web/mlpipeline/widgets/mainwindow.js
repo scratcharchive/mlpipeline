@@ -503,9 +503,8 @@ function MainWindow(O) {
 	}
 
 	function start_job(step,parent_pipeline_name) {
-		m_job_manager.startJobFromStep(step,parent_pipeline_name,function() {
-			m_status_bar.setLastAction('Started job.',5000);
-		});
+		m_job_manager.startTopLevelJob(step,parent_pipeline_name);
+		m_status_bar.setLastAction('Started job.',5000);
 	}
 	function stop_job(job) {
 		job.stop();
