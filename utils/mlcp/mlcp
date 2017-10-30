@@ -130,72 +130,69 @@ else if ('prv-create' in CLP.namedParameters) {
 	});
 	return;
 }
+else if ('list' in CLP.namedParameters) {
+	var address=CLP.unnamedParameters[0]||'';
+	if (!address) {
+		print_usage();
+		return;
+	}
+	do_list(address,function() {
+	});
+}
+else if ('remove' in CLP.namedParameters) {
+	var address=CLP.unnamedParameters[0]||'';
+	if (!address) {
+		print_usage();
+		return;
+	}
+	do_remove(address,function() {
+	});
+}
+else {
+	var src_address=CLP.unnamedParameters[0]||'';
+	var dst_address=CLP.unnamedParameters[1]||'';
 
-get_credentials_for_ticket(ticket,function() {
-	if ('list' in CLP.namedParameters) {
-		var address=CLP.unnamedParameters[0]||'';
-		if (!address) {
-			print_usage();
-			return;
-		}
-		do_list(address,function() {
+	if ((!src_address)||(!dst_address)) {
+		print_usage();
+		return;
+	}
+
+	if ((starts_with(dst_address,'s3://'))&&(!starts_with(src_address,'s3://'))) {
+		do_upload(src_address,dst_address,function() {
+			process.exit(0); //do this because of request-progress waiting for next timeout
 		});
 	}
-	else if ('remove' in CLP.namedParameters) {
-		var address=CLP.unnamedParameters[0]||'';
-		if (!address) {
-			print_usage();
-			return;
-		}
-		do_remove(address,function() {
+	else if ((starts_with(src_address,'s3://'))&&(!starts_with(dst_address,'s3://'))) {
+		do_download(src_address,dst_address,function() {
+			process.exit(0); //do this because of request-progress waiting for next timeout
 		});
 	}
-	else {
-		var src_address=CLP.unnamedParameters[0]||'';
-		var dst_address=CLP.unnamedParameters[1]||'';
-
-		if ((!src_address)||(!dst_address)) {
-			print_usage();
-			return;
-		}
-
-		if ((starts_with(dst_address,'s3://'))&&(!starts_with(src_address,'s3://'))) {
-			do_upload(src_address,dst_address,function() {
-				process.exit(0); //do this because of request-progress waiting for next timeout
+	else if ((starts_with(src_address,'s3://'))&&(starts_with(dst_address,'s3://'))) {
+		if ('move' in CLP.namedParameters) {
+			do_copy_or_move('move',src_address,dst_address,function() {
 			});
-		}
-		else if ((starts_with(src_address,'s3://'))&&(!starts_with(dst_address,'s3://'))) {
-			do_download(src_address,dst_address,function() {
-				process.exit(0); //do this because of request-progress waiting for next timeout
-			});
-		}
-		else if ((starts_with(src_address,'s3://'))&&(starts_with(dst_address,'s3://'))) {
-			if ('move' in CLP.namedParameters) {
-				do_copy_or_move('move',src_address,dst_address,function() {
-				});
-			}
-			else {
-				do_copy_or_move('copy',src_address,dst_address,function() {
-				});
-			}
 		}
 		else {
-			print_usage();
-			return;
+			do_copy_or_move('copy',src_address,dst_address,function() {
+			});
 		}
 	}
-});
+	else {
+		print_usage();
+		return;
+	}
+}
 
-function get_credentials_for_ticket(ticket,callback) {
-	var url=server_url+'/api/get_credentials';
-	http_post_json(url,{ticket:ticket},{},function(tmp) {
+function get_credentials_for_s3_command(ticket,command,params,callback) {
+	var url=server_url+'/api/get_credentials_for_s3_command';
+	http_post_json(url,{ticket:ticket,command:command,params:params},{},function(tmp) {
 		if (!tmp.success) {
-			console.log ('Error getting credentials: '+tmp.error);
+			console.log ('Error getting credentials for s3 command: '+tmp.error);
 			return;
 		}
 		var obj=tmp.object;
 		if (!obj.success) {
-			console.log ('Error in get_credentials: '+obj.error);
+			console.log ('Error in get_credentials for s3 command: '+obj.error);
 			return;
 		}
 
@@ -204,9 +201,8 @@ function get_credentials_for_ticket(ticket,callback) {
 			secretAccessKey:obj.credentials.SecretAccessKey,
 			sessionToken:obj.credentials.SessionToken
 		});
-		callback({success:true});
+		if (callback) callback({success:true}); callback=0;
 	});
-	//callback();
 }
 
 function do_list(address,cb) {
@@ -214,35 +210,39 @@ function do_list(address,cb) {
 	var bucket=get_bucket_from_s3_address(address);
 	var path=get_path_from_s3_address(address);
 
-	s3.listObjects({Bucket:bucket,Prefix:path+'/',Delimiter:'/'},function(err,data) {
-		if (err) {
-			console.error('Error listing folder '+path+' in bucket '+bucket+': '+err.code);
-			return;
-		}
-		var subdirs=[];
-		for (var i in data.CommonPrefixes) {
-			var tmp=data.CommonPrefixes[i].Prefix;
-			var tmp2=tmp.split('/');
-			subdirs.push(tmp2[tmp2.length-2]);
-		}
-		var files=[];
-		var contents=data.Contents;
-		for (var i in contents) {
-			var C=contents[i];
-			var file0={
-				name:C.Key.slice((path+'/').length),
-				size:C.Size
-			};
-			files.push(file0);
-		}
-		for (var i in subdirs) {
-			console.log (subdirs[i]+'/');
-		}
-		for (var i in files) {
-			var size0=format_file_size(files[i].size);
-			console.log (files[i].name+' ('+size0+')');
-		}
-	});
+
+	var list_params={Bucket:bucket,Prefix:path+'/',Delimiter:'/'};
+	get_credentials_for_s3_command(ticket,'listObjects',list_params,function() {
+		s3.listObjects(list_params,function(err,data) {
+			if (err) {
+				console.error('Error listing folder '+path+' in bucket '+bucket+': '+err.code);
+				return;
+			}
+			var subdirs=[];
+			for (var i in data.CommonPrefixes) {
+				var tmp=data.CommonPrefixes[i].Prefix;
+				var tmp2=tmp.split('/');
+				subdirs.push(tmp2[tmp2.length-2]);
+			}
+			var files=[];
+			var contents=data.Contents;
+			for (var i in contents) {
+				var C=contents[i];
+				var file0={
+					name:C.Key.slice((path+'/').length),
+					size:C.Size
+				};
+				files.push(file0);
+			}
+			for (var i in subdirs) {
+				console.log (subdirs[i]+'/');
+			}
+			for (var i in files) {
+				var size0=format_file_size(files[i].size);
+				console.log (files[i].name+' ('+size0+')');
+			}
+		});
+	}
 }
 
 function do_copy_or_move(str,src_address,dst_address,cb) {
@@ -257,26 +257,33 @@ function do_copy_or_move(str,src_address,dst_address,cb) {
 		return;
 	}
 	console.log ('Copying object: '+'/'+src_bucket+'/'+src_path+' to '+'/'+dst_bucket+'/'+dst_path);
-	s3.copyObject({Bucket:dst_bucket,CopySource:'/'+src_bucket+'/'+src_path,Key:dst_path},function(err,data) {
-		if (err) {
-			console.error('Error copying object: '+err.code);
-			return;
-		}
-		console.log ('Done.');
-		if (str=='move') {
-			console.log ('Deleting object: /'+src_bucket+'/'+src_path);
-			s3.deleteObject({Bucket:src_bucket,Key:src_path},function(err2,data2) {
-				if (err2) {
-					console.error('Error removing source object: '+err2.code);
-					return;
-				}
-				console.log ('Done');
+	var params_copy={Bucket:dst_bucket,CopySource:'/'+src_bucket+'/'+src_path,Key:dst_path};
+	// actually: don't do it this way, just make a request to mlcps to copy or move the object
+	get_credentials_for_s3_command(ticket,'copyObject',params_copy,function() {
+		s3.copyObject(params_copy,function(err,data) {
+			if (err) {
+				console.error('Error copying object: '+err.code);
 				return;
-			});
-		}
-		else {
-			return;
-		}
+			}
+			console.log ('Done.');
+			if (str=='move') {
+				console.log ('Deleting object: /'+src_bucket+'/'+src_path);
+				var params_delete={Bucket:src_bucket,Key:src_path};
+				get_credentials_for_s3_command(ticket,'deleteObject',params_delete,function() {
+					s3.deleteObject(params_delete,function(err2,data2) {
+						if (err2) {
+							console.error('Error removing source object: '+err2.code);
+							return;
+						}
+						console.log ('Done');
+						return;
+					});
+				});
+			}
+			else {
+				return;
+			}
+		});
 	});
 }
 
@@ -285,11 +292,14 @@ function do_remove(address,cb) {
 
 	var bucket=get_bucket_from_s3_address(address);
 	var path=get_path_from_s3_address(address);
-	s3.deleteObject({Bucket:bucket,Key:path},function(err1,data1) {
-		if (err1) {
-			console.error('Error removing object: '+err1.code);
-			return;
-		}
+	var params_delete={Bucket:bucket,Key:path};
+	get_credentials_for_s3_command(ticket,'deleteObject',params_delete,function() {
+		s3.deleteObject(params_delete,function(err1,data1) {
+			if (err1) {
+				console.error('Error removing object: '+err1.code);
+				return;
+			}
+		});
 	});
 }
 
@@ -305,87 +315,21 @@ function do_upload(src_address,dst_address,cb) {
 	var dst_path=get_path_from_s3_address(dst_address);
 
 	var read_stream=require('fs').createReadStream(src_address);
-	var RR=s3.upload({Bucket:dst_bucket,Key:dst_path,Body:read_stream},function(err,data) {
-		if (err) {
-			console.log ('Error in upload: '+err.code);
-			return;
-		}
-		if (cb) cb();
+	get_credentials_for_s3_command('upload',{Bucket:dst_bucket,Key:dst_path,file_size_bytes:src_size_bytes},function() {
+		var RR=s3.upload({Bucket:dst_bucket,Key:dst_path,Body:read_stream},function(err,data) {
+			if (err) {
+				console.log ('Error in upload: '+err.code);
+				return;
+			}
+			if (cb) cb();
+		});
 	});
 
 	RR.on('httpUploadProgress',function(aa) {
 		var size1=format_file_size(aa.loaded);
 		var size2=format_file_size(aa.total);
 		var pct=Math.floor(aa.loaded/aa.total*100);
-		console.log('Uploaded '+size1+' of '+size2+' ('+pct+'%)');
-	});
-}
-
-function perform_single_upload(url,query,src_address,range,cb) {
-	size_bytes=range[1]-range[0]+1;
-
-	var form = new FormData();
-	for (var field in query) {
-		form.append(field,query[field]);
-	}
-	console.log ('uploading: '+src_address+' to '+dst_address);
-	form.append('file', require('fs').createReadStream(src_address,{start:range[0],end:range[1]}));
-
-	var done=false;
-	var reqreq=form.submit(url, function(err, resp){
-		if (err) {
-			console.error('Error submitting upload: '+err.message);
-			if (cb) cb({success:false,error:err.message}); cb=0;
-		} else {
-			var body='';
-			resp.on('data',function(data) {
-				body+=data.toString('utf-8');
-			});
-			resp.on('error',function(err) {
-				console.log ('Error: '+err.message);
-				if (cb) cb({success:false,error:err.message}); cb=0;
-			});
-			resp.on('end',function() {
-				if (body.trim()) console.log (body);
-				if (cb) {
-					cb({success:true}); cb=0;
-				}
-			});
-			//console.log('body: '+JSON.stringify(body));
-		}
-	});
-	return reqreq;
-}
-
-function upload_part_summary_file(url,query,summary_info,cb) {
-	var form = new FormData();
-	for (var field in query) {
-		form.append(field,query[field]);
-	}
-	form.append('file', JSON.stringify(summary_info));
-
-	var done=false;
-	console.log ('Uploading part summary file');
-	form.submit(url, function(err, resp){
-		if (err) {
-			console.error('Error submitting summary file upload: '+err.message);
-			if (cb) cb({success:false,error:err.message}); cb=0;
-		} else {
-			var body='';
-			resp.on('data',function(data) {
-				body+=data.toString('utf-8');
-			});
-			resp.on('error',function(err) {
-				console.log ('Error: '+err.message);
-				if (cb) cb({success:false,error:err.message}); cb=0;
-			});
-			resp.on('end',function() {
-				if (body.trim()) console.log (body);
-				if (cb) {
-					cb({success:true}); cb=0;
-				}
-			});
-		}
+		console.log ('Uploaded '+size1+' of '+size2+' ('+pct+'%)');
 	});
 }
 
@@ -396,12 +340,16 @@ function do_download(src_address,dst_address,callback) {
 	var src_bucket=get_bucket_from_s3_address(src_address);
 	var src_path=get_path_from_s3_address(src_address);
 
-	s3.headObject({Bucket:src_bucket,Key:src_path},function(err,data) {
-		if (err) {
-			console.error('Error locating object '+src_path+' in bucket '+src_bucket+': '+err.code);
+	get_object_size(src_bucket,src_path,function(tmp) {
+		if (!tmp.success) {
+			console.error('Error getting object size: '+tmp.error);
 			return;
 		}
-		var size0=Number(data.ContentLength);
+		var size0=tmp.size_bytes;
+		if (!size0) {
+			console.error('Unable to find file or size is zero: '+src_bucket+' '+src_path);
+			return;	
+		}
 		var sessionParams = {
 		    maxPartSize: 1024*1024*20,//default 20MB 
 		    concurrentStreams: 8,//default 5 
@@ -410,24 +358,40 @@ function do_download(src_address,dst_address,callback) {
 		}
 
 		var bytes_downloaded=0;
-		var d = downloader.download({Bucket:src_bucket,Key:src_path},sessionParams);
-		d.on('error',function(err){
-		    console.error(err);
+		get_credentials_for_s3_command('download',{Bucket:src_bucket,Key:src_path,file_size_bytes:size0},function() {
+			var d = downloader.download({Bucket:src_bucket,Key:src_path},sessionParams);
+			d.on('error',function(err){
+			    console.error(err);
+			});
+			// dat = size_of_part_downloaded 
+			d.on('part',function(dat){
+				bytes_downloaded+=dat;
+				var size1=format_file_size(bytes_downloaded);
+				var size2=format_file_size(size0);
+				var pct=Math.floor(bytes_downloaded/size0*100);
+			    console.log('Downloaded '+size1+' of '+size2+' ('+pct+'%)');
+			});
+			d.on('downloaded',function(dat){
+			    console.log (dat);
+			});
+			 
+			var w = require('fs').createWriteStream(dst_address);
+			d.pipe(w);
 		});
-		// dat = size_of_part_downloaded 
-		d.on('part',function(dat){
-			bytes_downloaded+=dat;
-			var size1=format_file_size(bytes_downloaded);
-			var size2=format_file_size(size0);
-			var pct=Math.floor(bytes_downloaded/size0*100);
-		    console.log('Downloaded '+size1+' of '+size2+' ('+pct+'%)');
-		});
-		d.on('downloaded',function(dat){
-		    console.log (dat);
-		});
-		 
-		var w = require('fs').createWriteStream(dst_address);
-		d.pipe(w);
+	});
+}
+
+function get_object_size(bucket,path,callback) {
+	var req={
+		bucket:bucket,
+		path:path
+	};
+	http_post_json(server_url+'/api/get_object_size',req,{},function(tmp) {
+		if (!tmp.success) {
+			console.error('Error making request: '+tmp.error);
+			return;
+		}
+		callback({success:true,size_bytes:tmp.size_bytes});
 	});
 }
 

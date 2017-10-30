@@ -18,3 +18,4 @@ build
 Makefile
 
 *.user.json
+local_storage

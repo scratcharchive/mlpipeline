@@ -1,0 +1,8 @@
+{
+  "name": "mlp",
+  "description": "Static web server for mlpipeline"
+  "repository": "https://github.com/flatironinstitute/mlpipeline",
+  "logo": "",
+  "keywords": ["spike sorting", "mountainlab", "mountainsort","mlpipeline"],
+  "image": "heroku/nodejs"
+}

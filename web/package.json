@@ -1,0 +1,23 @@
+{
+  "name": "mlp",
+  "version": "0.0.1",
+  "description": "Static web server for MLPipeline",
+  "engines": {
+    "node": "6.11.1"
+  },
+  "main": "heroku_index.js",
+  "scripts": {
+    "start": "node heroku_index.js"
+  },
+  "dependencies": {
+    "express": "4.15.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flatironinstitute/mlpipeline"
+  },
+  "keywords": [
+    "spike sorting","mountainlab","mountainsort","mlpipeline"
+  ],
+  "license": "MIT"
+}
