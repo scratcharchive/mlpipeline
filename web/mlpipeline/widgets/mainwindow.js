@@ -424,7 +424,7 @@ function MainWindow(O) {
 				alert(tmp.error);
 				return;
 			}
-			var url0='https://mlstatic.herokuapp.com/mlpipeline?load='+btoa(tmp.url);
+			var url0='https://mlp.herokuapp.com/mlpipeline?load='+btoa(tmp.url);
 			alert(url0);
 		});
 	}
