@@ -31,6 +31,7 @@ function MainWindow(O) {
 	JSQ.connect(m_kulele_client,'login_info_changed',O,on_kulele_client_login_info_changed);
 
 	var m_docstor_client=null;
+	var m_is_docstor_document=false;
 
 	var processor_manager=new ProcessorManager();
 	m_kulele_client.setProcessorManager(processor_manager);
@@ -39,7 +40,7 @@ function MainWindow(O) {
     var m_document=new MLPDocument();
     m_document.inputFileManager().setKuleleClient(m_kulele_client);
     m_document.outputFileManager().setKuleleClient(m_kulele_client);
-    m_document.setDocumentName('default');
+    m_document.setDocumentName('default.mlp');
 
     JSQ.connect(m_document,'processing_server_name_changed',O,on_processing_server_name_changed);
 
@@ -123,6 +124,7 @@ function MainWindow(O) {
     JSQ.connect(m_main_menu,'save_to_processing_server',O,function() {save_to_processing_server();});
     JSQ.connect(m_main_menu,'load_from_processing_server',O,function() {load_from_processing_server();});
     JSQ.connect(m_main_menu,'save_to_docstor',O,function() {save_to_docstor();});
+    JSQ.connect(m_main_menu,'share_on_docstor',O,function() {share_on_docstor();});
     JSQ.connect(m_main_menu,'load_from_docstor',O,function() {load_from_docstor();});
     JSQ.connect(m_main_menu,'save_to_google_drive',O,function() {save_to_google_drive();});
     JSQ.connect(m_main_menu,'load_from_google_drive',O,function() {load_from_google_drive();});
@@ -203,9 +205,10 @@ function MainWindow(O) {
 				return;
 			}
 			load_from_document_object(obj);
-			O.setDocumentName(remove_mlp_suffix((tmp.file_name||'default')));
+			O.setDocumentName((tmp.file_name||'default.mlp'));
 			O.setDocumentOwner('');
 			m_status_bar.setLastAction('Loaded from file.',5000);
+			m_is_docstor_document=false;
 		});
 	}
 
@@ -214,9 +217,10 @@ function MainWindow(O) {
 		var doc_name=prompt('Name of JSON document:',remove_mlp_suffix(m_document.documentName()||'default')+'.mlp');
 		var obj=get_document_object();
 		download(JSON.stringify(obj),doc_name);
-		setDocumentName(remove_mlp_suffix(doc_name));
+		setDocumentName(doc_name);
 		m_last_saved_document_object=m_document.toObject();
 		m_status_bar.setLastAction('Saved to file.',5000);
+		m_is_docstor_document=false;
 	}
 
 	function load_from_processing_server(userid,doc_name,promptsave,callback) {
@@ -256,10 +260,11 @@ function MainWindow(O) {
 					return;
 				}
 				load_from_document_object(tmp2.object);		
-				O.setDocumentName(remove_mlp_suffix(doc_name));
+				O.setDocumentName(doc_name);
 				O.setDocumentOwner('');
 				finalize({success:true});
 				m_status_bar.setLastAction('Loaded document from processing server.',5000);
+				m_is_docstor_document=false;
 			});
 		});
 		function finalize(ret) {
@@ -281,9 +286,10 @@ function MainWindow(O) {
 				alert('Problem uploading to user storage: '+tmp.error);
 				return;
 			}
-			setDocumentName(remove_mlp_suffix(doc_name));
+			setDocumentName(doc_name);
 			m_last_saved_document_object=m_document.toObject();
 			m_status_bar.setLastAction('Document saved to processing server.',5000);
+			m_is_docstor_document=false;
 		});
 	}
 
@@ -337,7 +343,7 @@ function MainWindow(O) {
 				callback({success:true,exists:false});
 				return;	
 			}
-			callback({success:true,exists:true,id:docs[0]._id});
+			callback({success:true,exists:true,id:docs[0]._id,permissions:docs[0].permissions,attributes:docs[0].attributes});
 		});
 	}
 
@@ -382,10 +388,11 @@ function MainWindow(O) {
 				return;
 			}
 			load_from_document_object(obj);
-			O.setDocumentName(remove_mlp_suffix(title));
+			O.setDocumentName(title);
 			O.setDocumentOwner(owner);
 			finalize({success:true});
 			m_status_bar.setLastAction('Loaded document from docstor.',5000);
+			m_is_docstor_document=true;
 		});
 		function finalize(ret) {
 			set_loading_message('');
@@ -421,6 +428,83 @@ function MainWindow(O) {
 			}
 			callback({success:true});
 		});	
+	}
+
+	function change_permissions_of_document_on_docstor(id,permissions,callback) {
+		var user_list=[];
+		var users0=permissions.users||[];
+		var lookup={};
+		for (var i in users0) {
+			user_list.push(users0[i].id);
+			lookup[users0[i].id]=JSQ.clone(users0[i]);
+		}
+		var str=prompt('Comma-separated list of users:',user_list.join(','));
+		if (!str) {
+			callback({success:false});
+			return;
+		}
+		var list2=str.split(',');
+		var users2=[];
+		for (var j=0; j<list2.length; j++) {
+			var user0=list2[j].trim();
+			if (user0 in lookup)
+				users2.push(lookup[user0]);
+			else
+				users2.push({id:user0,read:true,write:true});
+		}
+		var new_permissions=JSQ.clone(permissions);
+		new_permissions.users=JSQ.clone(users2);
+		m_docstor_client.setDocument(id,{permissions:new_permissions},function(err,tmp) {
+			if (err) {
+				callback({success:false,error:err});
+				return;
+			}
+			callback({success:true});
+		});
+	}
+
+	function share_on_docstor() {
+		if (m_edit_pipeline_widget.editorIsDirty()) {
+			alert('You must first save your changes to the cloud.');
+			return;
+		}
+		if (!m_is_docstor_document) {
+			alert('You must first save your changes to the cloud (*)');
+			return;
+		}
+		set_loading_message('Checking docstor...');
+		var title=m_document.documentName();
+		var owner=m_document.documentOwner();
+		check_document_exists_on_docstor(owner,title,function(tmp) {
+			if (!tmp.success) {
+				alert('Problem:: '+tmp.error);
+				on_failure();
+				return;
+			}
+			if (tmp.exists) {
+				console.log(tmp.permissions);
+				change_permissions_of_document_on_docstor(tmp.id,tmp.permissions,function(tmp2) {
+					if (tmp2.success) {
+						on_success();
+					}
+					else {
+						on_failure();
+					}
+				});
+			}
+			else {
+				alert('Document not found on docstor');
+				on_failure();
+			}
+		});
+		function on_failure() {
+			m_status_bar.setLastAction('Did not share document docstor',5000);
+			set_loading_message('');
+		}
+		function on_success() {
+			m_status_bar.setLastAction('Document shared on docstor: '+m_document.documentName()+' '+m_document.documentOwner(),5000);
+			set_loading_message('');
+		}
 	}
 
 	function save_to_docstor() {
@@ -486,6 +570,7 @@ function MainWindow(O) {
 			m_status_bar.setLastAction('Document saved to docstor: '+m_document.documentName()+' '+m_document.documentOwner(),5000);
 			update_url();
 			set_loading_message('');
+			m_is_docstor_document=true;
 		}
 	}
 
@@ -496,9 +581,10 @@ function MainWindow(O) {
 		var obj=get_document_object();
 		var LS=new LocalStorage();
 		LS.writeObject('mlpdoc--'+doc_name,obj);
-		setDocumentName(remove_mlp_suffix(doc_name));
+		setDocumentName(doc_name);
 		m_last_saved_document_object=m_document.toObject();
 		m_status_bar.setLastAction('Document saved to browser storage.',5000);
+		m_is_docstor_document=false;
 	}
 
 	function check_ok_to_save() {
@@ -531,7 +617,7 @@ function MainWindow(O) {
 			}
 		}
 		load_from_document_object({});
-		O.setDocumentName('untitled');
+		O.setDocumentName('untitled.mlp');
 		O.setDocumentOwner('');
 		if (callback) callback({success:true});
 		m_status_bar.setLastAction('Opened new document.',5000);
@@ -563,11 +649,12 @@ function MainWindow(O) {
 				return;
 			}
 			load_from_document_object(obj);
-			O.setDocumentName(remove_mlp_suffix(doc_name));
+			O.setDocumentName(doc_name);
 			O.setDocumentOwner('');
 			if (callback) callback({success:true});
 			set_loading_message('');
 			m_status_bar.setLastAction('Document loaded from browser storage.',5000);
+			m_is_docstor_document=false;
 		},10);
 	}
 
@@ -587,8 +674,9 @@ function MainWindow(O) {
 			dlg.setFileName(doc_name);
 			dlg.setSiteName('This web page');
 			dlg.show();	
-			setDocumentName(remove_mlp_suffix(doc_name));
+			setDocumentName(doc_name);
 			m_last_saved_document_object=m_document.toObject();
+			m_is_docstor_document=false;
 		});
 	}
 
@@ -611,8 +699,9 @@ function MainWindow(O) {
 					return;
 				}
 				load_from_document_object(obj);
-				O.setDocumentName(remove_mlp_suffix(tmp.file_name||'default'));
+				O.setDocumentName(tmp.file_name||'default.mlp');
 				O.setDocumentOwner('');
+				m_is_docstor_document=false;
 			}
 			else {
 				console.log (tmp);
@@ -631,6 +720,7 @@ function MainWindow(O) {
 			load_from_document_object(tmp.object);
 			if (callback) callback({success:true});
 			m_status_bar.setLastAction('Document loaded from config url.',5000);
+			m_is_docstor_document=false;
 		});
 	}
 
