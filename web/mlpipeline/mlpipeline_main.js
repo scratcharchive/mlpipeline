@@ -11,7 +11,6 @@ function jsqmain(query) {
         DSC.setDocStorUrl('http://localhost:5011');
     else
         DSC.setDocStorUrl('https://docstor1.herokuapp.com');
-    DSC.setGoogleClientId('272128844725-rh0k50hgthnphjnkbb70s0v1efjt0pq3.apps.googleusercontent.com');
     X.setDocStorClient(DSC);
 
     if (!local_mode) {
