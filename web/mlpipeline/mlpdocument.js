@@ -15,7 +15,9 @@ function MLPDocument(O) {
 	this.toObject=function() {return toObject();};
 	this.fromObject=function(obj) {fromObject(obj);};
 	this.documentName=function() {return m_document_name;};
+	this.documentOwner=function() {return m_document_owner;};
 	this.setDocumentName=function(name) {m_document_name=name;};
+	this.setDocumentOwner=function(owner) {m_document_owner=owner;};
 	this.pipelineListManager=function() {return m_pipeline_list_manager;};
 	this.inputFileManager=function() {return m_input_file_manager;};
 	this.outputFileManager=function() {return m_output_file_manager;};
@@ -24,6 +26,7 @@ function MLPDocument(O) {
 	this.setJobManager=function(JM) {m_job_manager=JM;};
 
 	var m_document_name='default';
+	var m_document_owner='';
 	var m_pipeline_list_manager=new MLPipelineListManager();
 	var m_input_file_manager=new PrvListManager();
 	var m_output_file_manager=new PrvListManager();

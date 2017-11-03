@@ -9,10 +9,12 @@ function MainWindow(O) {
 	this.loadFromFile=function() {load_from_file();};
 	this.loadFromGoogleDrive=function() {load_from_google_drive();};
 	this.setDocumentName=function(name) {setDocumentName(name);};
+	this.setDocumentOwner=function(owner) {setDocumentOwner(owner);};
 	this.documentName=function() {return m_document.documentName();}; 
 	this.changesHaveBeenSaved=function() {return changesHaveBeenSaved();};
 	this.setProcessingServerName=function(name) {m_document.setProcessingServerName(name);};
 	this.loadFromProcessingServer=function(userid,filename,promptsave,callback) {load_from_processing_server(userid,filename,promptsave,callback);};
+	this.loadFromDocStor=function(opts,callback) {load_from_docstor(opts,callback);};
 	this.login=function(opts,callback) {login(opts,callback);};
 	this.setLoadingMessage=function(msg) {set_loading_message(msg);};
 	this.kuleleClient=function() {return m_kulele_client;};
@@ -202,13 +204,14 @@ function MainWindow(O) {
 			}
 			load_from_document_object(obj);
 			O.setDocumentName(remove_mlp_suffix((tmp.file_name||'default')));
+			O.setDocumentOwner('');
 			m_status_bar.setLastAction('Loaded from file.',5000);
 		});
 	}
 
 	function save_to_file() {
 		if (!check_ok_to_save()) return;
-		var doc_name=prompt('Name of JSON document:',(m_document.documentName()||'default')+'.mlp');
+		var doc_name=prompt('Name of JSON document:',remove_mlp_suffix(m_document.documentName()||'default')+'.mlp');
 		var obj=get_document_object();
 		download(JSON.stringify(obj),doc_name);
 		setDocumentName(remove_mlp_suffix(doc_name));
@@ -254,6 +257,7 @@ function MainWindow(O) {
 				}
 				load_from_document_object(tmp2.object);		
 				O.setDocumentName(remove_mlp_suffix(doc_name));
+				O.setDocumentOwner('');
 				finalize({success:true});
 				m_status_bar.setLastAction('Loaded document from processing server.',5000);
 			});
@@ -267,7 +271,7 @@ function MainWindow(O) {
 
 	function save_to_processing_server() {
 		if (!check_ok_to_save()) return;
-		var doc_name=prompt('Give the document a name for future retrieval:',(m_document.documentName()||'default')+'.mlp');
+		var doc_name=prompt('Give the document a name for future retrieval:',remove_mlp_suffix(m_document.documentName()||'default')+'.mlp');
 		if (!doc_name) return;
 		var obj=get_document_object();
 		set_loading_message('Saving to user storage on processing server...');
@@ -329,7 +333,11 @@ function MainWindow(O) {
 		});
 	}
 
-	function load_from_docstor(userid,doc_name,promptsave,callback) {
+	function load_from_docstor(opts,callback) {
+		opts=opts||{};
+		var promptsave=opts.promptsave;
+		var title=opts.title;
+		var owner=opts.owner;
 		if (promptsave!==false) {
 			if (!O.changesHaveBeenSaved()) {
 				if (!confirm('You may lose your unsaved changes. Continue?')) {
@@ -338,16 +346,23 @@ function MainWindow(O) {
 				}
 			}
 		}
-		if (!doc_name) {
-			doc_name=prompt('Name of document:',(m_document.documentName()||'default')+".mlp");
+		if (!title) {
+			title=prompt('Title of document:',(m_document.documentName()||'default')+".mlp");
 		}
-		if (!doc_name) {
+		if (!title) {
 			finalize({success:false});
 			return;
 		}
+		if (!owner) {
+			owner=prompt('Owner of document:',m_kulele_client.userId());
+		}
+		if (!owner) {
+			finalize({success:false});
+			return;
+		}
+
 		set_loading_message('Loading document from docstor...');
-		if (!userid) userid=m_kulele_client.userId();
-		download_document_content_from_docstor(userid,doc_name,function(tmp) {
+		download_document_content_from_docstor(owner,title,function(tmp) {
 			if (!tmp.success) {
 				alert('Problem: '+tmp.error);
 				finalize({success:false});
@@ -359,7 +374,8 @@ function MainWindow(O) {
 				return;
 			}
 			load_from_document_object(obj);
-			O.setDocumentName(remove_mlp_suffix(doc_name));
+			O.setDocumentName(remove_mlp_suffix(title));
+			O.setDocumentOwner(owner);
 			finalize({success:true});
 			m_status_bar.setLastAction('Loaded document from docstor.',5000);
 		});
@@ -401,20 +417,24 @@ function MainWindow(O) {
 
 	function save_to_docstor() {
 		if (!check_ok_to_save()) return;
-		var doc_name=prompt('Give the document a name for future retrieval:',(m_document.documentName()||'default')+'.mlp');
-		if (!doc_name) return;
-		var user_id=m_kulele_client.userId();
+		var title=remove_mlp_suffix(m_document.documentName()||'default')+'.mlp';
+		title=prompt('Give the document a title for future retrieval:',title);
+		if (!title) return;
+		var owner=m_document.documentOwner()||m_kulele_client.userId();
+		owner=prompt('Document owner:',owner);
+		if (!owner) return;
+
 		var obj=get_document_object();
 		set_loading_message('Saving to docstor...');
-		check_document_exists_on_docstor(user_id,doc_name,function(tmp) {
+		check_document_exists_on_docstor(owner,title,function(tmp) {
 			if (!tmp.success) {
 				alert('Problem:: '+tmp.error);
-				finalize();
+				on_failure();
 				return;
 			}
 			if (tmp.exists) {
-				if (!confirm('Document with this name exists. Overwrite?')) {
-					finalize();
+				if (!confirm('Document with this title/owner exists. Overwrite?')) {
+					on_failure();
 					return;
 				}
 				overwrite_document_on_docstor(tmp.id,JSON.stringify(obj),function(tmp2) {
@@ -424,22 +444,39 @@ function MainWindow(O) {
 					else {
 						alert('Problem saving to docstor: '+tmp2.error);
 					}
-					finalize();
+					on_success();
 				});
 			}
 			else {
-				upload_document_to_docstor(user_id,doc_name,JSON.stringify(obj),function(tmp2) {
+				upload_document_to_docstor(owner,title,JSON.stringify(obj),function(tmp2) {
 					if (tmp2.success) {
 						set_loading_message('Document uploaded to docstor');
 					}
 					else {
 						alert('Problem uploading to docstor: '+tmp2.error);
 					}
-					finalize();
+					on_success();
 				});
 			}
 		});
-		function finalize() {
+		function update_url() {
+			try {
+				history.pushState(null, null, '?docstor='+title+'&owner='+owner);
+			}
+			catch(err) {
+				console.log ('Unable to update url');
+			}
+		}
+		function on_failure() {
+			m_status_bar.setLastAction('Did not save document to docstor',5000);
+			set_loading_message('');
+		}
+		function on_success() {
+			setDocumentName(title);
+			setDocumentOwner(owner);
+			m_last_saved_document_object=m_document.toObject();
+			m_status_bar.setLastAction('Document saved to docstor: '+m_document.documentName()+' '+m_document.documentOwner(),5000);
+			update_url();
 			set_loading_message('');
 		}
 	}
@@ -472,6 +509,9 @@ function MainWindow(O) {
 		m_document.setDocumentName(name);
 		update_document_name_in_status();
 	}
+	function setDocumentOwner(owner) {
+		m_document.setDocumentOwner(owner);
+	}
 
 	function new_document(promptsave,callback) {
 		if (promptsave!=false) {
@@ -484,6 +524,7 @@ function MainWindow(O) {
 		}
 		load_from_document_object({});
 		O.setDocumentName('untitled');
+		O.setDocumentOwner('');
 		if (callback) callback({success:true});
 		m_status_bar.setLastAction('Opened new document.',5000);
 	}
@@ -515,6 +556,7 @@ function MainWindow(O) {
 			}
 			load_from_document_object(obj);
 			O.setDocumentName(remove_mlp_suffix(doc_name));
+			O.setDocumentOwner('');
 			if (callback) callback({success:true});
 			set_loading_message('');
 			m_status_bar.setLastAction('Document loaded from browser storage.',5000);
@@ -523,7 +565,7 @@ function MainWindow(O) {
 
 	function save_to_google_drive() {
 		if (!check_ok_to_save()) return;
-		var doc_name=prompt('Give the document a name for future retrieval (warning: browser storage is temporary):',(m_document.documentName()||'default')+'.mlp');
+		var doc_name=prompt('Give the document a name for future retrieval (warning: browser storage is temporary):',remove_mlp_suffix(m_document.documentName()||'default')+'.mlp');
 		if (!doc_name) return;
 		var obj=get_document_object();
 
@@ -562,6 +604,7 @@ function MainWindow(O) {
 				}
 				load_from_document_object(obj);
 				O.setDocumentName(remove_mlp_suffix(tmp.file_name||'default'));
+				O.setDocumentOwner('');
 			}
 			else {
 				console.log (tmp);

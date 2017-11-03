@@ -13,9 +13,9 @@ function jsqmain(query) {
     var X=new MainWindow();
     X.showFullBrowser();
 
-    //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on whether we are running this on localhost
+    //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
     var DSC=new DocStorClient();
-    if (on_localhost)
+    if ((on_localhost)&&(!local_mode))
         DSC.setDocStorUrl('http://localhost:5011');
     else
         DSC.setDocStorUrl('https://docstor1.herokuapp.com');
@@ -73,6 +73,11 @@ function jsqmain(query) {
                         X.setLoadingMessage('');
                     });
                 },100);   
+            }
+            else if (query.docstor) {
+                X.loadFromDocStor({title:query.docstor||'',owner:query.owner||'',promptsave:false},function() {
+                    X.setLoadingMessage('');
+                });
             }
             else {
                 X.setLoadingMessage('');
