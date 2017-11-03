@@ -713,6 +713,15 @@ function MainWindow(O) {
 			m_kulele_client.login({google_id_token:args.id_token},function(tmp) {
 				if (!tmp.success) {
 					alert('Problem logging in: '+tmp.error);
+					return;
+				}
+				if (m_docstor_client) {
+					m_docstor_client.login({id_token:args.id_token},function(err0) {
+						if (err0) {
+							alert('Problem logging in to docstor client');
+							return;
+						}
+					});
 				}
 			});
 		});
