@@ -790,3 +790,12 @@ function LoadingMessageWidget(O) {
 		O.div().html('<h2>'+m_message+'</h2>');
 	}
 }
+
+function try_parse_json(str) {
+	try {
+		return JSON.parse(str);
+	}
+	catch(err) {
+		return null;
+	}
+}
