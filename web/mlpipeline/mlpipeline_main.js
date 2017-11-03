@@ -2,11 +2,20 @@ function jsqmain(query) {
 
     query=query||{};
     var local_mode=(window.mlpipeline_mode=='local'); 
+    var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
 
     var X=new MainWindow();
+
+    var DSC=new DocStorClient();
+    if (on_localhost)
+        DSC.setDocStorUrl('http://localhost:5011');
+    else
+        DSC.setDocStorUrl('https://docstor1.herokuapp.com');
+    X.setDocStorClient(DSC);
+
     if (!local_mode) {
 
-        if ((!jsu_starts_with(window.location.href,'http://localhost'))&&(location.protocol != 'https:')) {
+        if ((!on_localhost)&&(location.protocol != 'https:')) {
             location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
         }
 

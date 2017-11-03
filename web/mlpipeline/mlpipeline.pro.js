@@ -25,7 +25,7 @@ opts.TARGET = 'index.html';
 opts.SCRIPTS.push(
 	'mlpipeline_main.js','mlpipeline.js','editmlpipelinewidget.js',
 	'mltablewidget.js','kuleleclient.js','editmlpipelinetablewidget.js',
-	'mlpdocument.js','jobmanager.js'
+	'mlpdocument.js','jobmanager.js','docstorclient.js'
 );
 opts.STYLESHEETS.push('editmlpipelinewidget.css','create.css');
 

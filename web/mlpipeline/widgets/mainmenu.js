@@ -20,8 +20,10 @@ function MainMenu(O) {
 	add_menu_item(file_menu,'Save to file...',function() {O.emit('save_to_file');});
 	add_menu_item(file_menu,'Load from file...',function() {O.emit('load_from_file');});
 	add_menu_divider(file_menu);
-	add_menu_item(file_menu,'Save to processing server...',function() {O.emit('save_to_processing_server');});
-	add_menu_item(file_menu,'Load from processing server...',function() {O.emit('load_from_processing_server');});
+	//add_menu_item(file_menu,'Save to processing server...',function() {O.emit('save_to_processing_server');});
+	//add_menu_item(file_menu,'Load from processing server...',function() {O.emit('load_from_processing_server');});
+	add_menu_item(file_menu,'Save to cloud...',function() {O.emit('save_to_docstor');});
+	add_menu_item(file_menu,'Load from cloud...',function() {O.emit('load_from_docstor');});
 	add_menu_divider(file_menu);
 	//add_menu_item(file_menu,'Save to Google Drive...',function() {O.emit('save_to_google_drive');});
 	//add_menu_item(file_menu,'Load from Google Drive...',function() {O.emit('load_from_google_drive');});
