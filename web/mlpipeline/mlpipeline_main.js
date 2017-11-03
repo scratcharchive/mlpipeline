@@ -81,22 +81,18 @@ function jsqmain(query) {
                 callback(resp.object);
             });
             /*
-            console.log('#############################');
             var cbcode=s_last_cb_code+1;
             s_last_cb_code=cbcode;
             window.callbacks[cbcode]=callback;
             window.mlpinterface.larinetserver(JSON.stringify(req),'window.callbacks['+cbcode+']');
-            console.log('#############################');
             */
         });
         /*
         X.kuleleClient().setLarinetServer(function(req,onclose,callback) {
-            console.log('#############################');
             var cbcode=s_last_cb_code+1;
             s_last_cb_code=cbcode;
             window.callbacks[cbcode]=callback;
             window.mlpinterface.larinetserver(JSON.stringify(req),'window.callbacks['+cbcode+']');
-            console.log('#############################');
         });
         */
 

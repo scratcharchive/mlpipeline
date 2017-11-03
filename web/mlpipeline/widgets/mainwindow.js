@@ -90,8 +90,6 @@ function MainWindow(O) {
     var m_main_menu=new MainMenu();
 
     O.onKeyPress(function(event) {
-    	console.log('onKeyPress');
-    	console.log(event);
     	m_main_menu.handleKeyPress(event);
     });
 

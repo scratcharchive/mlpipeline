@@ -1181,8 +1181,6 @@ function JobOld(O) {
 			var everything_ready=true
 			var input_files={};
 			for (var iname in step0.inputs) {
-				console.log('step0');
-				console.log(step0);
 				var list0=step0.inputs[iname];
 				if (typeof(list0)=='string') list0=[list0];
 				var list1=[];

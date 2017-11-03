@@ -78,7 +78,7 @@ if ('prv-locate' in CLP.namedParameters) {
 			return;
 		}
 		if (!obj.found) {
-			console.log('Not found: '+obj.message);
+			console.log ('Not found: '+obj.message);
 			return;
 		}
 		console.log (obj.path);
@@ -369,7 +369,7 @@ function do_download(src_address,dst_address,callback) {
 				var size1=format_file_size(bytes_downloaded);
 				var size2=format_file_size(size0);
 				var pct=Math.floor(bytes_downloaded/size0*100);
-			    console.log('Downloaded '+size1+' of '+size2+' ('+pct+'%)');
+			    console.log ('Downloaded '+size1+' of '+size2+' ('+pct+'%)');
 			});
 			d.on('downloaded',function(dat){
 			    console.log (dat);

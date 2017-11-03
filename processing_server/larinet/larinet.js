@@ -10,7 +10,6 @@ var data_directory=larinetserver.handler_opts.data_directory;
 app.set('port', (process.env.PORT || 5005));
 
 app.use(function(req,resp,next) {
-	console.log('test');
 	if (req.method == 'OPTIONS') {
 		var headers = {};
 		
