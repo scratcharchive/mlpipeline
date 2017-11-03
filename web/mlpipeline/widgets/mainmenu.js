@@ -14,20 +14,19 @@ function MainMenu(O) {
 
 	var file_menu=add_menu('File');
 	add_menu_item(file_menu,'New document',function() {O.emit('new_document');});
-	add_menu_item(file_menu,'Save to browser storage...',function() {O.emit('save_to_browser_storage');},'Ctrl+s');
+	add_menu_divider(file_menu); ///-----------------------------------
 	add_menu_item(file_menu,'Load from browser storage...',function() {O.emit('load_from_browser_storage');});
-	add_menu_divider(file_menu);
-	add_menu_item(file_menu,'Save to file...',function() {O.emit('save_to_file');});
 	add_menu_item(file_menu,'Load from file...',function() {O.emit('load_from_file');});
-	add_menu_divider(file_menu);
-	//add_menu_item(file_menu,'Save to processing server...',function() {O.emit('save_to_processing_server');});
-	//add_menu_item(file_menu,'Load from processing server...',function() {O.emit('load_from_processing_server');});
-	add_menu_item(file_menu,'Save to cloud...',function() {O.emit('save_to_docstor');});
 	add_menu_item(file_menu,'Load from cloud...',function() {O.emit('load_from_docstor');});
-	add_menu_divider(file_menu);
-	//add_menu_item(file_menu,'Save to Google Drive...',function() {O.emit('save_to_google_drive');});
+	//add_menu_item(file_menu,'Load from processing server...',function() {O.emit('load_from_processing_server');});
 	//add_menu_item(file_menu,'Load from Google Drive...',function() {O.emit('load_from_google_drive');});
-	add_menu_divider(file_menu);
+	add_menu_divider(file_menu); ///-----------------------------------
+	add_menu_item(file_menu,'Save to browser storage...',function() {O.emit('save_to_browser_storage');},'Ctrl+s');
+	add_menu_item(file_menu,'Save to file...',function() {O.emit('save_to_file');});
+	add_menu_item(file_menu,'Save to cloud...',function() {O.emit('save_to_docstor');});
+	//add_menu_item(file_menu,'Save to processing server...',function() {O.emit('save_to_processing_server');});
+	//add_menu_item(file_menu,'Save to Google Drive...',function() {O.emit('save_to_google_drive');});	
+	add_menu_divider(file_menu); ///-----------------------------------
 	add_menu_item(file_menu,'Get temporary shareable link...',function() {O.emit('get_temporary_shareable_link');});
 
 	var import_menu=add_menu('Pipelines');
@@ -101,7 +100,8 @@ function MainMenu(O) {
 		}
 	}
 	function add_menu_divider(parent) {
-		//parent.find('.content').append(X);
+		var X=$('<li><span style="color:lightgray">____________________________</span></li>');
+		parent.find('.content').append(X);
 	}
 	function registerPlugin(info,action_callback) {
 		var actions=info.actions||[];
