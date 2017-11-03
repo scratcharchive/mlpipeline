@@ -292,7 +292,11 @@ function MainWindow(O) {
 			callback({success:false,error:'No docstor client set.'});
 			return;
 		}
-		m_docstor_client.findDocuments({owned_by:userid,filter:{"attributes.title":doc_name}},function(err,docs) {
+		var query={owned_by:userid,filter:{"attributes.title":doc_name}};
+		if (userid!=m_kulele_client.userId()) {
+			query.and_shared_with=m_kulele_client.userId();
+		}
+		m_docstor_client.findDocuments(query,function(err,docs) {
 			if (err) {
 				callback({success:false,error:'Problem finding document: '+err});
 				return;
@@ -320,7 +324,11 @@ function MainWindow(O) {
 			callback({success:false,error:'No docstor client set.'});
 			return;
 		}
-		m_docstor_client.findDocuments({owned_by:userid,filter:{"attributes.title":doc_name}},function(err,docs) {
+		var query={owned_by:userid,filter:{"attributes.title":doc_name}};
+		if (userid!=m_kulele_client.userId()) {
+			query.and_shared_with=m_kulele_client.userId();
+		}
+		m_docstor_client.findDocuments(query,function(err,docs) {
 			if (err) {
 				callback({success:false,error:'Problem finding document: '+err});
 				return;
