@@ -385,7 +385,7 @@ function MainWindow(O) {
 		});
 	}
 
-	function upload_document_to_docstore(user_id,doc_name,content,callback) {
+	function upload_document_to_docstor(user_id,doc_name,content,callback) {
 		if (!m_docstor_client) {
 			callback({success:false,error:'No docstor client set.'});
 			return;
