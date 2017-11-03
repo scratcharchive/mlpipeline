@@ -41,6 +41,7 @@ function DocStorClient() {
 		var query={};
 		if ('owned_by' in opts) query.owned_by=opts.owned_by;
 		if ('shared_with' in opts) query.shared_with=opts.shared_with;
+		if ('and_shared_with' in opts) query.shared_with=opts.and_shared_with;
 		if ('filter' in opts) query.filter=JSON.stringify(opts.filter);
 		api_call('findDocuments',query,function(err,resp) {
 			if (err) {
