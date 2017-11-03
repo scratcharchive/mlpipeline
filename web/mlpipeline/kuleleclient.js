@@ -43,6 +43,7 @@ function KuleleClient(O) {
 	this.getProcessorSpec=function(callback) {getProcessorSpec(callback);};
 	this.setLarinetServer=function(LS) {console.log('LSLSLSLSLS'); m_larinetserver=LS;}; //only set when using nodejs
 	this.loginInfo=function() {return m_login_info;};
+	this.setLocalMode=function(val) {m_local_mode=val;};
 
 	var m_kulele_url='';
 	var m_cordion_url='';
@@ -52,6 +53,7 @@ function KuleleClient(O) {
 	var m_authorization={};
 	var m_larinetserver=null; //only set when using nodejs
 	var m_login_info={};
+	var m_local_mode=false;
 
 	if (jsu_starts_with(document.documentURI,'http://localhost')) {
 		m_kulele_url='http://localhost:5004';
@@ -72,6 +74,30 @@ function KuleleClient(O) {
 	    	callback({success:false,error:'prv is null or undefined'});
 	    	return;
 	    };
+
+	    var url0=m_kulele_url+'/subserver/'+m_subserver_name;
+		var req={
+			a:'prv-locate',
+			checksum:prv.original_checksum,
+			size:prv.original_size,
+			fcs:prv.original_fcs
+		};
+		var code=url0+JSON.stringify(req);
+		if (code in prv_locate_found_cache) {
+			callback(prv_locate_found_cache[code]);
+			return;
+		}
+		post_to_larinet(url0,req,function(tmp) {
+			if (!tmp.success) {
+				callback(tmp);
+				return;
+			}
+			if (tmp.found)
+				prv_locate_found_cache[code]=tmp;
+			callback(tmp);
+		});
+
+	    /*
 	    var url=m_kulele_url+'/subserver/'+m_subserver_name+'?a=prv-locate&checksum='+prv.original_checksum+'&size='+prv.original_size+'&fcs='+prv.original_fcs;   
 	    if (url in prv_locate_found_cache) {
 	    	callback(prv_locate_found_cache[url]);
@@ -90,6 +116,7 @@ function KuleleClient(O) {
 	    	}
 	    	callback(tmp.object);
 	    });
+	    */
 	}
 
 	function prvLocateInUserStorage(userid,filename,callback) {
@@ -473,9 +500,12 @@ function KuleleClient(O) {
 		    alert('Did not receive a raw url from server: '+name);
 		    return;  
 		  }
-		  console.log ('Opening: '+tmp.url);
-		  window.open(tmp.url,'_blank');
-		})
+		  var url0=tmp.url;
+		  if (m_local_mode)
+		  	url0=tmp.full_path;
+		  console.log ('Opening: '+url0);
+		  window.open(url0,'_blank');
+		});
 	}
 
 	/*

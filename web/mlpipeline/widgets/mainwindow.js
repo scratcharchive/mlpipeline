@@ -1,7 +1,9 @@
-function MainWindow(O) {
+function MainWindow(O,options) {
 	O=O||this;
 	JSQWidget(O);
 	O.div().addClass('MainWindow');
+
+	if (!options) options={};
 
 	this.loadFromBrowserStorage=function(doc_name,promptsave,callback) {load_from_browser_storage(doc_name,promptsave,callback);};
 	this.loadFromConfigUrl=function(config_url,promptsave,callback) {load_from_config_url(config_url,promptsave,callback);};
@@ -91,7 +93,7 @@ function MainWindow(O) {
     m_status_bar.setJobManager(m_job_manager);
     m_status_bar.setKuleleClient(m_kulele_client);
 
-    var m_main_menu=new MainMenu();
+    var m_main_menu=new MainMenu(null,options);
 
     O.onKeyPress(function(event) {
     	m_main_menu.handleKeyPress(event);

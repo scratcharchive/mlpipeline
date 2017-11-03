@@ -1,7 +1,9 @@
-function MainMenu(O) {
+function MainMenu(O,options) {
 	O=O||this;
 	JSQWidget(O);
 	O.div().addClass('MainMenu');
+
+	if (!options) options={};
 
 	this.handleKeyPress=function(event,key) {handleKeyPress(event,key);};
 	this.registerPlugin=function(info) {registerPlugin(info);};
@@ -17,15 +19,18 @@ function MainMenu(O) {
 	add_menu_divider(file_menu); ///-----------------------------------
 	add_menu_item(file_menu,'Load from browser storage...',function() {O.emit('load_from_browser_storage');});
 	add_menu_item(file_menu,'Load from file...',function() {O.emit('load_from_file');});
-	add_menu_item(file_menu,'Load from cloud...',function() {O.emit('load_from_docstor');});
+	if (!options.local_mode)
+		add_menu_item(file_menu,'Load from cloud...',function() {O.emit('load_from_docstor');});
 	//add_menu_item(file_menu,'Load from processing server...',function() {O.emit('load_from_processing_server');});
 	//add_menu_item(file_menu,'Load from Google Drive...',function() {O.emit('load_from_google_drive');});
 	add_menu_divider(file_menu); ///-----------------------------------
 	add_menu_item(file_menu,'Save to browser storage...',function() {O.emit('save_to_browser_storage');},'Ctrl+s');
 	add_menu_item(file_menu,'Save to file...',function() {O.emit('save_to_file');});
-	add_menu_item(file_menu,'Save to cloud...',function() {O.emit('save_to_docstor');});
+	if (!options.local_mode)
+		add_menu_item(file_menu,'Save to cloud...',function() {O.emit('save_to_docstor');});
 	add_menu_divider(file_menu); ///-----------------------------------
-	add_menu_item(file_menu,'Share...',function() {O.emit('share_on_docstor');});
+	if (!options.local_mode)
+		add_menu_item(file_menu,'Share...',function() {O.emit('share_on_docstor');});
 	//add_menu_item(file_menu,'Save to processing server...',function() {O.emit('save_to_processing_server');});
 	//add_menu_item(file_menu,'Save to Google Drive...',function() {O.emit('save_to_google_drive');});	
 	add_menu_divider(file_menu); ///-----------------------------------

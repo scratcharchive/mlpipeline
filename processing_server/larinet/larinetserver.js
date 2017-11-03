@@ -263,7 +263,7 @@ function larinetserver(req,onclose,callback) {
 				return;
 			}
 			var txt=file_path.slice(hopts.data_directory.length+1);
-			var resp={success:true,found:true,path:txt};
+			var resp={success:true,found:true,path:txt,full_path:file_path};
 			if (hopts.download_base_url) {
 				resp.url=hopts.download_base_url+'/'+resp.path;
 			}
@@ -284,8 +284,9 @@ function larinetserver(req,onclose,callback) {
 				callback=null;
 				return;
 			}
+			var full_path=txt;
 			txt=txt.slice(hopts.data_directory.length+1);
-			var resp={success:true,found:true,path:txt};
+			var resp={success:true,found:true,path:txt,full_path:full_path};
 			if (hopts.download_base_url)
 				resp.url=hopts.download_base_url+'/'+resp.path;
 			if (callback) callback(resp);

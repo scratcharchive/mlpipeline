@@ -1,6 +1,7 @@
 #include "mlpinterface.h"
 #include <QDebug>
 #include <QDir>
+#include <QFileDialog>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -32,6 +33,13 @@ void MLPInterface::open_mountainview(QString mv2_json)
     write_text_file(tmp_path,mv2_json);
     QString cmd=QString("mountainview %1").arg(tmp_path);
     QProcess::startDetached(cmd);
+}
+
+void MLPInterface::download(QString text)
+{
+    QString fname=QFileDialog::getSaveFileName(0,"Save file to your computer");
+    if (fname.isEmpty()) return;
+    write_text_file(fname,text);
 }
 
 void MLPInterface::larinetserver(QString req_json,QString callback_str)

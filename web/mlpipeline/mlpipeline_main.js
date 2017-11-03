@@ -10,8 +10,7 @@ function jsqmain(query) {
     var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
 
     // Here is the main window
-    var X=new MainWindow();
-    X.showFullBrowser();
+    var X=new MainWindow(null,{local_mode:local_mode});
 
     //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
     var DSC=new DocStorClient();
@@ -37,6 +36,7 @@ function jsqmain(query) {
             location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
         }
         
+        X.showFullBrowser();
         X.setLoadingMessage('Starting ML Pipeline...');
         X.login({use_last_successful:true},function() {
             window.onbeforeunload = function (e) {
@@ -86,6 +86,13 @@ function jsqmain(query) {
     }
 
     function setup_local_mode() {
+        window.download=function(text) {
+            mlpinterface.download(text); //send it back to the C++
+        }
+        window.open=function(url) {
+            alert('open: '+url);
+        }
+        X.kuleleClient().setLocalMode(true);
         X.kuleleClient().setLarinetServer(function(req,onclose,callback) {
             jsu_http_post_json('http://localhost:5005',req,{},function(resp) {
                 if (!resp.success) {

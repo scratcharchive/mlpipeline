@@ -242,7 +242,7 @@ function do_list(address,cb) {
 				console.log (files[i].name+' ('+size0+')');
 			}
 		});
-	}
+	});
 }
 
 function do_copy_or_move(str,src_address,dst_address,cb) {
@@ -315,7 +315,7 @@ function do_upload(src_address,dst_address,cb) {
 	var dst_path=get_path_from_s3_address(dst_address);
 
 	var read_stream=require('fs').createReadStream(src_address);
-	get_credentials_for_s3_command('upload',{Bucket:dst_bucket,Key:dst_path,file_size_bytes:src_size_bytes},function() {
+	get_credentials_for_s3_command(ticket,'upload',{Bucket:dst_bucket,Key:dst_path,file_size_bytes:src_size_bytes},function() {
 		var RR=s3.upload({Bucket:dst_bucket,Key:dst_path,Body:read_stream},function(err,data) {
 			if (err) {
 				console.log ('Error in upload: '+err.code);
@@ -347,6 +347,7 @@ function do_download(src_address,dst_address,callback) {
 		}
 		var size0=tmp.size_bytes;
 		if (!size0) {
+			console.log (tmp);
 			console.error('Unable to find file or size is zero: '+src_bucket+' '+src_path);
 			return;	
 		}
@@ -358,7 +359,7 @@ function do_download(src_address,dst_address,callback) {
 		}
 
 		var bytes_downloaded=0;
-		get_credentials_for_s3_command('download',{Bucket:src_bucket,Key:src_path,file_size_bytes:size0},function() {
+		get_credentials_for_s3_command(ticket,'download',{Bucket:src_bucket,Key:src_path,file_size_bytes:size0},function() {
 			var d = downloader.download({Bucket:src_bucket,Key:src_path},sessionParams);
 			d.on('error',function(err){
 			    console.error(err);
@@ -391,7 +392,7 @@ function get_object_size(bucket,path,callback) {
 			console.error('Error making request: '+tmp.error);
 			return;
 		}
-		callback({success:true,size_bytes:tmp.size_bytes});
+		callback(tmp.object);
 	});
 }
 

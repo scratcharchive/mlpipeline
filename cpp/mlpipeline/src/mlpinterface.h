@@ -12,6 +12,7 @@ public:
     virtual ~MLPInterface();
 
     Q_INVOKABLE void open_mountainview(QString mv2_json);
+    Q_INVOKABLE void download(QString text);
 public slots:
     void larinetserver(QString req_json,QString callback_str);
 
