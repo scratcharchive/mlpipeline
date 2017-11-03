@@ -16,6 +16,7 @@ function DocStorClient() {
 	var m_user='';
 
 	function login(info,callback) {
+		info.id_token=info.id_token||info.google_id_token; //too hacky?
 		if (info.passcode) {
 			m_authorization_header='Passcode '+info.passcode;
 		}
