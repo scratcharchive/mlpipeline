@@ -1,11 +1,19 @@
 function jsqmain(query) {
 
+    // The url query
     query=query||{};
+
+    // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
     var local_mode=(window.mlpipeline_mode=='local'); 
+
+    // Determine whether we are running on localhost (development mode)
     var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
 
+    // Here is the main window
     var X=new MainWindow();
+    X.showFullBrowser();
 
+    //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on whether we are running this on localhost
     var DSC=new DocStorClient();
     if (on_localhost)
         DSC.setDocStorUrl('http://localhost:5011');
@@ -13,20 +21,24 @@ function jsqmain(query) {
         DSC.setDocStorUrl('https://docstor1.herokuapp.com');
     X.setDocStorClient(DSC);
 
-    if (!local_mode) {
 
+    if (local_mode) {
+        setup_local_mode(); // Using Qt desktop
+    }
+    else {
+        setup_web_mode(); // Using web browser
+    }
+
+    function setup_web_mode() {
+        // Using web browser
+
+        // Switch to https protocol if needed
         if ((!on_localhost)&&(location.protocol != 'https:')) {
             location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
         }
-
-        //var processor_manager=new ProcessorManager();
-        //processor_manager.loadSpec();
-
-        //var X=new EditMLPipelineWidget(0,processor_manager);
         
-        X.showFullBrowser();
         X.setLoadingMessage('Starting ML Pipeline...');
-        X.loginWithLastSuccessful(function() {
+        X.login({use_last_successful:true},function() {
             window.onbeforeunload = function (e) {
                 if (!X.changesHaveBeenSaved()) {
                     var message = "Are you sure you want leave this page without saving changes?";
@@ -60,18 +72,15 @@ function jsqmain(query) {
                     X.loadFromProcessingServer(userid,filename,false,function() {
                         X.setLoadingMessage('');
                     });
-                },100);
-                
-                
+                },100);   
             }
             else {
                 X.setLoadingMessage('');
             }
-
         });
-        //X.showFullBrowser();
     }
-    else {
+
+    function setup_local_mode() {
         X.kuleleClient().setLarinetServer(function(req,onclose,callback) {
             jsu_http_post_json('http://localhost:5005',req,{},function(resp) {
                 if (!resp.success) {
@@ -160,7 +169,7 @@ function jsqmain(query) {
                 });
             }
         });
-    }   
+    }
 }
 
 function MessageWidget(O) {

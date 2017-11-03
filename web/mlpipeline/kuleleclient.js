@@ -42,6 +42,7 @@ function KuleleClient(O) {
 	this.downloadRawFromPrv=function(prv) {download_raw_from_prv(prv);};
 	this.getProcessorSpec=function(callback) {getProcessorSpec(callback);};
 	this.setLarinetServer=function(LS) {console.log('LSLSLSLSLS'); m_larinetserver=LS;}; //only set when using nodejs
+	this.loginInfo=function() {return m_login_info;};
 
 	var m_kulele_url='';
 	var m_cordion_url='';
@@ -50,6 +51,7 @@ function KuleleClient(O) {
 	var m_authorization_jwt='';
 	var m_authorization={};
 	var m_larinetserver=null; //only set when using nodejs
+	var m_login_info={};
 
 	if (jsu_starts_with(document.documentURI,'http://localhost')) {
 		m_kulele_url='http://localhost:5004';
@@ -128,21 +130,29 @@ function KuleleClient(O) {
 			if (!tmp.success) {
 				console.log ('Problem in login: '+tmp.error);;
 				callback(tmp);
+				m_login_info={};
+				O.emit('login_info_changed');
 				return;
 			}
 			if (!tmp.object.success) {
 				callback(tmp.object);
+				m_login_info={};
+				O.emit('login_info_changed');
 				return;
 			}
 			var jwt=tmp.object.token||'';
 			if (!jwt) {
 				callback({success:false,error:'token is empty'});
+				m_login_info={};
+				O.emit('login_info_changed');
 				return;
 			}
 			m_authorization_jwt=jwt;
 			m_authorization=decode_jwt_without_verifying(jwt);
 			O.emit('changed');
 			var LS=new LocalStorage();
+			m_login_info=JSQ.clone(opts);
+			O.emit('login_info_changed');
 			LS.writeObject('last-successful-login-info',{opts:opts});
 			callback({success:true});
 		});
@@ -163,7 +173,7 @@ function KuleleClient(O) {
 				}
 				callback(tmp);
 			});
-		},1000);
+		},500);
 	}
 
 	function decode_jwt_without_verifying(jwt) {

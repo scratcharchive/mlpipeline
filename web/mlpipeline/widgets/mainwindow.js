@@ -13,7 +13,7 @@ function MainWindow(O) {
 	this.changesHaveBeenSaved=function() {return changesHaveBeenSaved();};
 	this.setProcessingServerName=function(name) {m_document.setProcessingServerName(name);};
 	this.loadFromProcessingServer=function(userid,filename,promptsave,callback) {load_from_processing_server(userid,filename,promptsave,callback);};
-	this.loginWithLastSuccessful=function(callback) {m_kulele_client.loginWithLastSuccessful(callback);};
+	this.login=function(opts,callback) {login(opts,callback);};
 	this.setLoadingMessage=function(msg) {set_loading_message(msg);};
 	this.kuleleClient=function() {return m_kulele_client;};
 	this.registerPlugin=function(info) {m_main_menu.registerPlugin(info);}; 
@@ -26,6 +26,7 @@ function MainWindow(O) {
 
 	// Set up the kulele client
 	var m_kulele_client=new KuleleClient();
+	JSQ.connect(m_kulele_client,'login_info_changed',O,on_kulele_client_login_info_changed);
 
 	var m_docstor_client=null;
 
@@ -704,7 +705,36 @@ function MainWindow(O) {
 		}
 	}
 
-	function login_using_google() {
+	function login(opts,callback) {
+		if (opts.use_last_successful) {
+			m_kulele_client.loginWithLastSuccessful(function(tmp) {
+				if (tmp.success) {
+					callback(tmp);
+					return;
+				}
+				prompt_login(callback);
+			});
+		}
+	}
+
+	function prompt_login(callback) {
+		var dlg=new ChooseLoginDlg();
+		JSQ.connect(dlg,'accepted',O,function() {
+			var choice=dlg.choice();
+			if (choice=='google') {
+				login_using_google(callback);
+			}
+			else if (choice=='passcode') {
+				login_using_passcode(callback);	
+			}
+			else if (choice=='anonymous') {
+				callback({success:true});
+			}
+		});
+		dlg.show();
+	}
+
+	function login_using_google(callback) {
 		var dlg=new GoogleLogInDlg();
 		dlg.show();	
 		JSQ.connect(dlg,'accepted',O,function(sender,args) {
@@ -713,6 +743,8 @@ function MainWindow(O) {
 					alert('Problem logging in: '+tmp.error);
 					return;
 				}
+				if (callback) callback({success:true});
+				/*
 				if (m_docstor_client) {
 					m_docstor_client.login({id_token:args.id_token},function(err0) {
 						if (err0) {
@@ -721,18 +753,31 @@ function MainWindow(O) {
 						}
 					});
 				}
+				*/
 			});
 		});
 	}
 
-	function login_using_passcode() {
+	function login_using_passcode(callback) {
 		var passcode=prompt('Passcode:');
 		if (!passcode) return;
 		m_kulele_client.login({passcode:passcode},function(tmp) {
 			if (!tmp.success) {
 				alert('Problem logging in: '+tmp.error);
+				return;
 			}
+			if (callback) callback({success:true});
 		});
+	}
+
+	function on_kulele_client_login_info_changed() {
+		if (m_docstor_client) {
+			m_docstor_client.login(m_kulele_client.loginInfo(),function(err) {
+				if (err) {
+					console.error('Unable to log in to docstor client: '+err);
+				}
+			});
+		}
 	}
 
 	function remove_mlp_suffix(fname) {

@@ -34,7 +34,7 @@ opts.SCRIPTS.push(
 	'prvlistwidget.js','newstepdialog.js',
 	'mainwindow.js','mainmenu.js','statusbar.js','viewlistwidget.js',
 	'googledrive.js','greetingwindow.js','editstepdialog.js','mlpipelinelistwidget.js',
-	'importpipelinesdialog.js','textfilewindow.js'
+	'importpipelinesdialog.js','textfilewindow.js','chooselogindlg.js'
 );
 
 opts.SOURCEPATH.push('managers')
