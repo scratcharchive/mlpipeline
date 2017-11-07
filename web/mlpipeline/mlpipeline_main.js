@@ -147,7 +147,7 @@ function jsqmain(query) {
                 ]
             });
             X.setD
-            X.loadFromBrowserStorage('default',false);
+            X.loadFromBrowserStorage('default.mlp',false);
             function open_mountainview() {
                 var dlg=new EditStepDialog();
                 dlg.setSpec({
@@ -181,6 +181,14 @@ function jsqmain(query) {
                 });
             }
         });
+        window.okay_to_close=function() {
+            if (!X.changesHaveBeenSaved()) {
+                if (!confirm('You may lose your unsaved changes. Continue closing?')) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
 

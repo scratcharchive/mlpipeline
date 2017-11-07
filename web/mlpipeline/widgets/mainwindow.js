@@ -484,7 +484,6 @@ function MainWindow(O,options) {
 				return;
 			}
 			if (tmp.exists) {
-				console.log(tmp.permissions);
 				change_permissions_of_document_on_docstor(tmp.id,tmp.permissions,function(tmp2) {
 					if (tmp2.success) {
 						on_success();

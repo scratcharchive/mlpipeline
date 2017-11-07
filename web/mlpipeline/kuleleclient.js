@@ -41,7 +41,7 @@ function KuleleClient(O) {
 	this.cancelJob=function(process_id,callback) {cancelJob(process_id,callback);};
 	this.downloadRawFromPrv=function(prv) {download_raw_from_prv(prv);};
 	this.getProcessorSpec=function(callback) {getProcessorSpec(callback);};
-	this.setLarinetServer=function(LS) {console.log('LSLSLSLSLS'); m_larinetserver=LS;}; //only set when using nodejs
+	this.setLarinetServer=function(LS) {m_larinetserver=LS;}; //only set when using nodejs
 	this.loginInfo=function() {return m_login_info;};
 	this.setLocalMode=function(val) {m_local_mode=val;};
 
@@ -66,7 +66,7 @@ function KuleleClient(O) {
 
 	var prv_locate_found_cache={};
 	function prvLocate(prv,callback) {
-	    if (!m_subserver_name) {
+	    if ((!m_subserver_name)&&(!m_local_mode)) {
 	      callback({success:false,error:'subserver has not been set (prvLocate)'});
 	      return;
 	    }
@@ -120,7 +120,7 @@ function KuleleClient(O) {
 	}
 
 	function prvLocateInUserStorage(userid,filename,callback) {
-	    if (!m_subserver_name) {
+	    if ((!m_subserver_name)&&(!m_local_mode)) {
 	      callback({success:false,error:'subserver has not been set (prvLocateInUserStorage)'});
 	      return;
 	    }
@@ -436,7 +436,7 @@ function KuleleClient(O) {
 	}
 
 	function prvUploadToUserStorage(userid,filename,file_data,callback) {
-	    if (!m_subserver_name) {
+	    if ((!m_subserver_name)&&(!m_local_mode)) {
 	      callback({success:false,error:'subserver has not been set (prvUploadToUserStorage)'});
 	      return;
 	    }
@@ -489,10 +489,10 @@ function KuleleClient(O) {
 		}
 		O.prvLocate(prv,function(tmp) {
 		  if (!tmp.success) {
-		    alert('Problem locating file on server: '+name);
+		    alert('Problem locating file on server: '+name+": "+tmp.error);
 		    return;
 		  }
-		  if (!tmp.success) {
+		  if (!tmp.found) {
 		    alert('Unable to find raw file on server: '+name);
 		    return;
 		  }

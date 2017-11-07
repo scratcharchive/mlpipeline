@@ -186,6 +186,12 @@ function EditMLPipelineTableWidget(O,processor_manager) {
 
     }
   }
+  function shorten(txt,len) {
+    if (txt.length>len) {
+      return txt.slice(0,len-3)+'...';
+    }
+    else  return txt;
+  }
   function create_status_element(job) {
     var status=job.status()||'';
     var ret=$('<div />');
@@ -211,6 +217,7 @@ function EditMLPipelineTableWidget(O,processor_manager) {
     }
     aa.append(tmp);
     ret.append(aa);
+    if (status=='error') ret.append(' '+shorten(job.error()||'',60))
     //if (status=='running') {
     //  ret.append(' '+(status.message||''));
     //}
@@ -590,6 +597,10 @@ function EditMLPipelineTableWidget(O,processor_manager) {
   function download_console_prv(console_prv) {
     if (!console_prv) {
       alert('Unexpected: console_prv is null.');
+      return;
+    }
+    if ((console_prv.original_checksum)&&(console_prv.original_size===0)) {
+      alert('Console output is empty.');
       return;
     }
     var KS=m_job_manager.kuleleClient();

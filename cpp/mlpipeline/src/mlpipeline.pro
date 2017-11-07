@@ -9,10 +9,12 @@ TARGET = mlpipeline
 TEMPLATE = app
 
 SOURCES += mlpipeline_main.cpp \
-    mlpinterface.cpp
+    mlpinterface.cpp \
+    clparams.cpp
 
 HEADERS += \
-    mlpinterface.h
+    mlpinterface.h \
+    clparams.h
 
 DEFINES += "MLP_DIR=\\\"$${MLP_DIR}\\\""
 

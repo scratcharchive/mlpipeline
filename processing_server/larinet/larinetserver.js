@@ -270,7 +270,7 @@ function larinetserver(req,onclose,callback) {
 			callback(resp);
 			return;
 		}
-		if ((!query.checksum)||(!query.size)||(!('fcs' in query))) {
+		if ((!query.checksum)||(!('size' in query))||(!('fcs' in query))) {
 			if (callback) {
 				callback({success:false,error:"Invalid query."});	
 				callback=null;

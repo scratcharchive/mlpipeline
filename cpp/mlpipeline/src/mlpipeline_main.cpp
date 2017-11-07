@@ -6,6 +6,9 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QTabWidget>
+#include <QCloseEvent>
+#include <QMainWindow>
+#include "clparams.h"
 #include "mlpinterface.h"
 
 QString read_text_file(const QString& fname, QTextCodec* codec=0)
@@ -29,8 +32,25 @@ class MyPage : public QWebPage {
     }
 };
 
+class MyMainWidget : public QMainWindow {
+public:
+    void closeEvent(QCloseEvent *evt) Q_DECL_OVERRIDE {
+        if (frame) {
+            bool val=frame->evaluateJavaScript("okay_to_close()").toBool();
+            if (!val) {
+                evt->ignore();
+                return;
+            }
+        }
+        QMainWindow::closeEvent(evt);
+    }
+    QWebFrame *frame=0;
+};
+
 int main(int argc, char *argv[]) {
     QApplication a(argc,argv);
+
+    CLParams CLP(argc,argv);
 
     QWebView *W=new QWebView;
     W->setPage(new MyPage());
@@ -56,12 +76,14 @@ int main(int argc, char *argv[]) {
     QWebInspector *WI=new QWebInspector;
     WI->setPage(W->page());
 
-    QWidget main_window;
-    QHBoxLayout *main_layout=new QHBoxLayout;
-    main_window.setLayout(main_layout);
+    MyMainWidget main_window;
+    main_window.frame=frame;
+    //QHBoxLayout *main_layout=new QHBoxLayout;
+    //main_window.setLayout(main_layout);
     QTabWidget *tab_widget=new QTabWidget;
     tab_widget->setTabPosition(QTabWidget::South);
-    main_layout->addWidget(tab_widget);
+    //main_layout->addWidget(tab_widget);
+    main_window.setCentralWidget(tab_widget);
     tab_widget->addTab(W,"MLPipeline");
     tab_widget->addTab(WI,"Debug");
 
