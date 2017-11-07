@@ -16,6 +16,7 @@ bin
 build
 *.pro.user
 Makefile
+Makefile.*
 
 *.user.json
 local_storage
