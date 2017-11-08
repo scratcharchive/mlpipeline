@@ -33,10 +33,14 @@ function StatusBar(O) {
 			var processing_server=m_kuleke_client.subserverName();
 			var processor_manager=m_kuleke_client.processorManager();
 			var num_processors=processor_manager.numProcessors();
+			if (m_kuleke_client.localMode()) {
+				processing_server='[local]';
+			}
 			title0='Using processing server '+(processing_server||'[not set]')+' with '+num_processors+' registered processors';
 			O.div().find('#processing_server').html('<span title="'+title0+'">'+(processing_server||'[not set]')+' ('+num_processors+')</span>');
 			var userid=m_kuleke_client.userId();
 			O.div().find('#user_id').html(userid||'');
+			
 		}
 	}
 

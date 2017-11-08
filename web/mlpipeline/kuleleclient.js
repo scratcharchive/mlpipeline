@@ -44,6 +44,7 @@ function KuleleClient(O) {
 	this.setLarinetServer=function(LS) {m_larinetserver=LS;}; //only set when using nodejs
 	this.loginInfo=function() {return m_login_info;};
 	this.setLocalMode=function(val) {m_local_mode=val;};
+	this.localMode=function() {return m_local_mode;};
 
 	var m_kulele_url='';
 	var m_cordion_url='';

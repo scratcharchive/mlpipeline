@@ -71,6 +71,7 @@ function PrvListWidget(O,prv_list_manager) {
       var row0=m_table.createRow();
       m_table.addRow(row0);
       var upload_button=$('<div title="Upload file or .prv file" class=fab-upload-file><div class=upload-icon /></div>');
+      var upload_button=$('<div title="Upload file or .prv file" class=upload_button></div>');
       upload_button.click(upload_prv);
       row0.cell(2).append(upload_button);
     }
