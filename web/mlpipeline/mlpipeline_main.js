@@ -9,8 +9,12 @@ function jsqmain(query) {
     // Determine whether we are running on localhost (development mode)
     var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
 
-    // Here is the main window
-    var X=new MainWindow(null,{local_mode:local_mode});
+    if (!local_mode) {
+        // Switch to https protocol if needed
+        if ((!on_localhost)&&(location.protocol != 'https:')) {
+            location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+        }
+    }
 
     //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
     var DSC=new DocStorClient();
@@ -18,8 +22,6 @@ function jsqmain(query) {
         DSC.setDocStorUrl('http://localhost:5011');
     else
         DSC.setDocStorUrl('https://docstor1.herokuapp.com');
-    X.setDocStorClient(DSC);
-
 
     if (local_mode) {
         setup_local_mode(); // Using Qt desktop
@@ -30,12 +32,10 @@ function jsqmain(query) {
 
     function setup_web_mode() {
         // Using web browser
-
-        // Switch to https protocol if needed
-        if ((!on_localhost)&&(location.protocol != 'https:')) {
-            location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-        }
         
+        // Here is the main window
+        var X=new MainWindow(null,{local_mode:local_mode});
+        X.setDocStorClient(DSC);
         X.showFullBrowser();
         X.setLoadingMessage('Starting ML Pipeline...');
         X.login({use_last_successful:true},function() {
@@ -86,6 +86,9 @@ function jsqmain(query) {
     }
 
     function setup_local_mode() {
+        var X=new MainWindow(null,{local_mode:local_mode});
+        X.setDocStorClient(DSC);
+        X.showFullBrowser();
         window.download=function(text) {
             mlpinterface.download(text); //send it back to the C++
         }

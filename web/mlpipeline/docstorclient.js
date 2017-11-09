@@ -10,6 +10,8 @@ function DocStorClient() {
 	this.getAccessRules=function(callback) {getAccessRules(callback);};
 	this.setAccessRules=function(rules,callback) {setAccessRules(rules,callback);};
 	this.removeDocument=function(id,callback) {removeDocument(id,callback);};
+	this.requestPrvUploadCredentials=function(id,callback) {requestPrvUploadCredentials(id,callback);};
+	this.requestPrvDownloadCredentials=function(id,callback) {requestPrvDownloadCredentials(id,callback);};
 
 	var m_docstor_url='';
 	var m_authorization_header='';
@@ -130,6 +132,26 @@ function DocStorClient() {
 				return;
 			}
 			callback(null);
+		});
+	}
+
+	function requestPrvUploadCredentials(id,callback) {
+		api_call('requestPrvUploadCredentials',{id:id},function(err,resp0) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			callback(null,resp0);
+		});
+	}
+
+	function requestPrvDownloadCredentials(id,callback) {
+		api_call('requestPrvUploadCredentials',{id:id},function(err,resp0) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			callback(null,resp0);
 		});
 	}
 
