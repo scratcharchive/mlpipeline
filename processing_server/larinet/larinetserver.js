@@ -3,12 +3,10 @@ var exports = module.exports = {};
 
 var m_job_manager=new JobManager();
 
-var config=read_json_file(__dirname+'/larinet.user.json');
-if (!config) {
-	console.log ('larinetserver.js: Missing, empty, or invalid config file');
-	return;
-}
-var data_directory=config.data_directory||'';
+var CLP=new CLParams(process.argv);
+
+var config=read_json_file(__dirname+'/larinet.user.json')||{};
+var data_directory=CLP.namedParameters['data_directory']||config.data_directory||'';
 if (!('download_base_url' in config)) {
 	config.download_base_url="${base}/raw";
 }
@@ -16,17 +14,21 @@ var download_base_url=config.download_base_url||'';
 var prv_exe='prv';
 var mp_exe='mproc';
 
+var handler_opts={};
+exports.handler_opts=handler_opts;
+
+console.log('abc');
+
 if (!data_directory) {
-	console.log ('problem: data_directory is empty.');
+	console.log ('warning: data_directory is empty.');
 	return;
 }
+console.log ('Using data_directory='+data_directory);
 
-var handler_opts={};
 handler_opts.prv_exe=prv_exe;
 handler_opts.mp_exe=mp_exe;
 handler_opts.data_directory=data_directory;
 handler_opts.download_base_url=download_base_url;
-exports.handler_opts=handler_opts;
 
 function JobManager() {
 	var that=this;
@@ -821,3 +823,32 @@ function Download() {
 		}
 	}
 }
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				//this.namedParameters[arg0]=args[i+1]||'';
+				//i++;
+				this.namedParameters[arg0]='';
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+};

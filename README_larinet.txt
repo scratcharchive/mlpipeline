@@ -2,6 +2,13 @@ The larinet service allows your computer to serve as a MountainLab processing se
 
 Instructions:
 
+If you installed mlpipeline via package manager (e.g. apt install), then just do the following
+
+> larinet --data_directory=/path/to/prvbucket
+
+where /path/to/prvbucket is the directory where MLPipeline will store intermediate (and other) files.
+
+Otherwise, if you are using mlpipeline from downloaded (or cloned) source code, do the following:
 
 -------------------------------------------------------
 1. Configure larinet
@@ -23,13 +30,7 @@ MLPipeline will look for raw data and store intermediate (and other) files there
 
 > npm start
 
-Currently, it will run on port 5005, but to reconfigure the port:
-
-	1. Modify "otherserver_url" in kulelepoller.user.json to point to the new port
-	2. Before launching larinet, in the same terminal
-		> export PORT=XXXXX
-		> npm start
-		where XXXX = the port of interest, ie 12345
+Currently, it will run on port 5005, but this port can be changed using the PORT environment variable. However, you will need to make sure that the client software knows to communicate with this port.
 
 -------------------------------------------------------
 
@@ -40,8 +41,7 @@ Note: If this is for a processing server, accessible from the internet, then you
 
 	If running on a port other than 5005:
 	> tmux new -s larinet
-	> export PORT=XXXXX
-	> npm start
+	> npm start (or if you installed as a package, run larinet as above)
 
 Ctrl+b,d to close
 

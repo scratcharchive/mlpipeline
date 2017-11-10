@@ -1,13 +1,22 @@
 var express = require('express');
 var app = express();
 
-
 var larinetserver=require(__dirname+'/larinetserver.js');
-var Handler=new larinetserver.RequestHandler();
 
 var data_directory=larinetserver.handler_opts.data_directory;
 
-app.set('port', (process.env.PORT || 5005));
+if (!data_directory) {
+	console.log ('problem: data_directory is empty (use a config file or the --data_directory=/path/to/prvbucket command-line argument.');
+	return;
+}
+
+var Handler=new larinetserver.RequestHandler();
+
+var CLP=new CLParams(process.argv);
+
+var port=CLP.namedParameters['port']||(process.env.PORT || 5005);
+
+app.set('port', port);
 
 app.use(function(req,resp,next) {
 	if (req.method == 'OPTIONS') {
@@ -66,3 +75,32 @@ function read_json_file(fname) {
 		return null;
 	}	
 }
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				//this.namedParameters[arg0]=args[i+1]||'';
+				//i++;
+				this.namedParameters[arg0]='';
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+};

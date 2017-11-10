@@ -88,7 +88,6 @@ function jsqmain(query) {
     function setup_local_mode() {
         var X=new MainWindow(null,{local_mode:local_mode});
         X.setDocStorClient(DSC);
-        X.showFullBrowser();
         window.download=function(text) {
             mlpinterface.download(text); //send it back to the C++
         }
@@ -124,7 +123,7 @@ function jsqmain(query) {
         // test the connection to larinet
         X.kuleleClient().getProcessorSpec(function(tmp) {
             if (!tmp.success) {
-                show_full_browser_message('Unable to connect to local larinet server.','You must start the larinet service on your computer before running mlpipeline locally. <br /> It won\'t take very long.<br /><br /> For instructions, see mlpipeline/processing_server/larinet/README.txt');
+                show_full_browser_message('Unable to connect to local larinet server.','You must start the larinet service on your computer before running mlpipeline locally. <br /> It won\'t take very long.<br /><br /> For instructions, see README_larinet.txt');
                 return;
             }
             X.showFullBrowser();
