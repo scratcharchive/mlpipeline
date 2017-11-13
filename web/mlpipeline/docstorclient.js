@@ -10,8 +10,12 @@ function DocStorClient() {
 	this.getAccessRules=function(callback) {getAccessRules(callback);};
 	this.setAccessRules=function(rules,callback) {setAccessRules(rules,callback);};
 	this.removeDocument=function(id,callback) {removeDocument(id,callback);};
+	this.removeDocuments=function(ids,callback) {removeDocuments(ids,callback);};
 	this.requestPrvUploadCredentials=function(id,callback) {requestPrvUploadCredentials(id,callback);};
 	this.requestPrvDownloadCredentials=function(id,callback) {requestPrvDownloadCredentials(id,callback);};
+	this.findPrvContent=function(id,callback) {findPrvContent(id,callback);};
+	this.reportSuccessfulUpload=function(data,callback) {reportSuccessfulUpload(data,callback);};
+	this.reportSuccessfulDownload=function(data,callback) {reportSuccessfulDownload(data,callback);};
 
 	var m_docstor_url='';
 	var m_authorization_header='';
@@ -134,6 +138,15 @@ function DocStorClient() {
 			callback(null);
 		});
 	}
+	function removeDocuments(ids,callback) {
+		api_call('removeDocuments',{ids:ids},function(err) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			callback(null);
+		});
+	}
 
 	function requestPrvUploadCredentials(id,callback) {
 		api_call('requestPrvUploadCredentials',{id:id},function(err,resp0) {
@@ -141,12 +154,42 @@ function DocStorClient() {
 				callback(err);
 				return;
 			}
-			callback(null,resp0);
+			callback(null,resp0.credentials);
 		});
 	}
 
 	function requestPrvDownloadCredentials(id,callback) {
-		api_call('requestPrvUploadCredentials',{id:id},function(err,resp0) {
+		api_call('requestPrvDownloadCredentials',{id:id},function(err,resp0) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			callback(null,resp0.credentials);
+		});
+	}
+
+	function reportSuccessfulDownload(size_bytes,callback) {
+		api_call('reportSuccessfulDownload',{size_bytes:size_bytes},function(err) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			callback(null);
+		});
+	}
+
+	function reportSuccessfulUpload(size_bytes,callback) {
+		api_call('reportSuccessfulUpload',{size_bytes:size_bytes},function(err) {
+			if (err) {
+				callback(err);
+				return;
+			}
+			callback(null);
+		});
+	}
+
+	function findPrvContent(id,callback) {
+		api_call('findPrvContent',{id:id},function(err,resp0) {
 			if (err) {
 				callback(err);
 				return;
