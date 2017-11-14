@@ -1,17 +1,17 @@
 #!/usr/bin/env nodejs
 
 function print_usage() {
-	console.log ('mlp [pipeline_document.mlp]');
+	console.log ('mlp [pipeline_document.mlp] --pipeline=[name of internal pipeline]');
 	return;
 }
 
-var mlstatic_path='../../../mlserver/mlstatic';
-JobManager=require(mlstatic_path+'/public/mlpipeline/jobmanager.js').JobManager;
-Job=require(mlstatic_path+'/public/mlpipeline/jobmanager.js').Job;
-ProcessorManager=require(mlstatic_path+'/public/mlpipeline/managers/processormanager.js').ProcessorManager;
-MLPDocument=require(mlstatic_path+'/public/mlpipeline/mlpdocument.js').MLPDocument;
-JSQ=require(mlstatic_path+'/public/mlpipeline/jsq/src/jsqcore/jsq.js').JSQ;
-KuleleClient=require(mlstatic_path+'/public/mlpipeline/kuleleclient.js').KuleleClient;
+var web_path=__dirname+'/../../web';
+JobManager=require(web_path+'/mlpipeline/jobmanager.js').JobManager;
+Job=require(web_path+'/mlpipeline/jobmanager.js').Job;
+ProcessorManager=require(web_path+'/mlpipeline/managers/processormanager.js').ProcessorManager;
+MLPDocument=require(web_path+'/mlpipeline/mlpdocument.js').MLPDocument;
+JSQ=require(web_path+'/mlpipeline/jsq/src/jsqcore/jsq.js').JSQ;
+KuleleClient=require(web_path+'/mlpipeline/kuleleclient.js').KuleleClient;
 
 var CLP=new CLParams(process.argv);
 var arg1=CLP.unnamedParameters[0]||'';
@@ -33,7 +33,7 @@ var output_file_manager=doc.outputFileManager();
 var job_manager=new JobManager();
 var processor_manager=new ProcessorManager();
 var kulele_client=new KuleleClient();
-var larinetserver=require(__dirname+'/../processing_server/larinet/larinetserver.js').larinetserver;
+var larinetserver=require(__dirname+'/../../processing_server/larinet/larinetserver.js').larinetserver;
 kulele_client.setLarinetServer(larinetserver);
 kulele_client.setProcessorManager(processor_manager);
 
@@ -62,16 +62,115 @@ kulele_client.login({passcode:'testuser'},function(tmp) {
 
 
 function step2() {
-	var pipeline0=PLM.findPipeline('main');
-	if (!pipeline0) {
-		console.err('Unable to find main pipeline in document.');
-		return;
+	var pipeline_name=CLP.unnamedParameters[1]||'';
+	var pipeline0;
+	if (pipeline_name) {
+		var subpipeline=PLM.findPipeline(pipeline_name);
+		if (!subpipeline) {
+			console.err('Unable to find main pipeline in document named '+pipeline_name);
+			return;
+		}
+
+		var spec0=subpipeline.spec();
+		//console.log(spec0);
+		//return;
+
+		pipeline0=new MLPipeline();
+		var parameters0={};
+		for (var i=0; i<spec0.parameters.length; i++) {
+			var pname=spec0.parameters[i].name;
+			if (pname in CLP.namedParameters) {
+				parameters0[pname]=CLP.namedParameters[pname];
+			}
+			else {
+				if (!spec0.parameters[i].optional) {
+					console.error('Missing required parameter: '+pname);
+					return;
+				}
+			}
+		}
+		var outputs0={}
+		for (var i=0; i<spec0.outputs.length; i++) {
+			var oname=spec0.outputs[i].name;
+			if (oname in CLP.namedParameters) {
+				outputs0[oname]=oname;
+			}
+			else {
+				if (!spec0.outputs[i].optional) {
+					console.error('Missing required output: '+oname);
+					return;
+				}
+			}
+		}
+		var inputs0={}
+		for (var i=0; i<spec0.inputs.length; i++) {
+			var iname=spec0.inputs[i].name;
+			if (iname in CLP.namedParameters) {
+				inputs0[iname]=iname;
+			}
+			else {
+				if (!spec0.inputs[i].optional) {
+					console.error('Missing required input: '+iname);
+					return;
+				}
+			}
+		}
+		for (var iname in inputs0) {
+			var path0=CLP.namedParameters[iname];
+			console.log ('Computing checksum for file: '+path0);
+			var stat=prv_stat_sync(path0);
+			if (!stat) {
+				console.error('Error computing checksum for file: '+path0);
+				return;
+			}
+			var prv={
+				original_path:require('path').resolve(process.cwd(),path0),
+				original_checksum:stat.checksum,
+				original_fcs:stat.fcs,
+				original_size:stat.size
+			}
+			input_file_manager.setPrv(iname,prv);
+		}
+		var step0={
+			step_type: "pipeline",
+      		pipeline_name: pipeline_name,
+      		inputs: inputs0,
+      		outputs: outputs0,
+      		parameters: parameters0
+		};
+		pipeline0.setObject({
+			spec:{name:'main2'},steps:[step0]
+		});
+		doc.pipelineListManager().addPipeline(pipeline0);
+	}
+	else {
+		pipeline0=PLM.findPipeline('main');
+		if (!pipeline0) {
+			console.err('Unable to find main pipeline in document.');
+			return;
+		}
 	}
 	for (var i=0; i<pipeline0.stepCount(); i++) {
 		var step0=pipeline0.step(i);
-		job_manager.startJobFromStep(step0,'main',function() {
-
-		});
+		job_manager.startTopLevelJob(step0,'main2',function(tmp) {
+			if (!tmp.success) {
+				console.error('Error: '+tmp.error);
+				return;
+			}
+			var job=job_manager.findLastJobForStep(pipeline0.name(),step0);
+			if (!job) {
+				console.error('Unexpected: unable to find job for step.');
+				return;
+			}
+			var output_files=job.outputFiles();
+			for (var okey in output_files) {
+				if (okey in CLP.namedParameters) {
+					var prv=output_files[okey].prv;
+					console.log('Copying output '+okey+' to '+CLP.namedParameters[okey]);
+					copy_file_sync(prv.original_path,CLP.namedParameters[okey]);
+				}
+			}
+		}); 
 	}
 
 	/*
@@ -182,6 +281,46 @@ function step2() {
 		return false;
 	}
 	*/
+}
+
+function foreach_async(list,func,callback) {
+  var index=0;
+  do_next();
+  function do_next() {
+    if (index>=list.length) {
+      callback(null);
+      return;
+    }
+    func(list[index],function() {
+      index++;
+      do_next();
+    });
+  }
+}
+
+function copy_file_sync(src,dst) {
+	require('child_process').execSync('cp '+src+' '+dst);
+}
+
+function prv_stat_sync(path) {
+	var r = require('child_process').execSync('prv-stat '+path);
+	var str=r.toString();
+	console.log(str);
+	var obj=try_parse_json(str.trim());
+	if (!obj) {
+		console.error('Error parsing json in output of prv-stat');
+		return null;
+	}
+	return obj;
+}
+
+function try_parse_json(str) {
+	try {
+		return JSON.parse(str);
+	}
+	catch(err) {
+		return null;
+	}
 }
 
 function CLParams(argv) {
