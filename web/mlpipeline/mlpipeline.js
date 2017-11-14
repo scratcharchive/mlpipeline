@@ -237,14 +237,15 @@ function MLPipelineScript() {
 
 	function spec() {
 		if (m_spec) return m_spec;
-		var P=pipeline();
+		var P=pipeline(null,null,null,{spec_only:true});
 		if (!P) return null;
 		m_spec=P.spec();
 		m_spec.name=m_object.name||'';
 		return m_spec;
 	}
 
-	function pipeline(input_files,output_files,parameters) {
+	function pipeline(input_files,output_files,parameters,opts) {
+		if (!opts) opts={};
 		input_files=input_files||{};
 		output_files=output_files||{};
 		parameters=parameters||{};
@@ -265,35 +266,41 @@ function MLPipelineScript() {
 		obj1.spec.outputs=_Pipeline.spec.outputs||[];
 		obj1.spec.parameters=_Pipeline.spec.parameters||[];
 		obj1.steps=_Pipeline.steps||[];
-		if (_Pipeline.run) {
-			var X={
-				runProcess:function(processor_name,inputs,outputs,params) {
-					obj1.steps.push({step_type:'processor',processor_name:processor_name,inputs:inputs,outputs:outputs,parameters:params})
-				},
-				runPipeline:function(pipeline_name,inputs,outputs,params) {
-					obj1.steps.push({step_type:'pipeline',pipeline_name:pipeline_name,inputs:inputs,outputs:outputs,parameters:params})
-				},
-				createJson:function(content,inputs,outputs,params) {
-					obj1.steps.push({step_type:'json_output',content:content,inputs:inputs,outputs:outputs,parameters:params})
-				},
-				hasInput:function(iname) {
-					if (input_files[iname]) return true;
-					else return false;
-				},
-				hasOutput:function(oname) {
-					if (output_files[oname]) return true;
-					else return false;
-				},
-				parameters:parameters
-			}
-			try {
-				_Pipeline.run(X);
-			}
-			catch(err) {
-				console.error (err.stack);
-				console.error (err.message);
-				m_error='Error running script for pipeline *: '+err.message;
-				return null;
+		if (!opts.spec_only) {
+			if (_Pipeline.run) {
+				var X={
+					runProcess:function(processor_name,inputs,outputs,params) {
+						obj1.steps.push({step_type:'processor',processor_name:processor_name,inputs:inputs,outputs:outputs,parameters:params})
+					},
+					runPipeline:function(pipeline_name,inputs,outputs,params) {
+						obj1.steps.push({step_type:'pipeline',pipeline_name:pipeline_name,inputs:inputs,outputs:outputs,parameters:params})
+					},
+					createJson:function(content,inputs,outputs,params) {
+						obj1.steps.push({step_type:'json_output',content:content,inputs:inputs,outputs:outputs,parameters:params})
+					},
+					hasInput:function(iname) {
+						if (input_files[iname]) return true;
+						else return false;
+					},
+					hasOutput:function(oname) {
+						if (output_files[oname]) return true;
+						else return false;
+					},
+					parameters:parameters
+				}
+				try {
+					var exit_code=_Pipeline.run(X);
+					if (exit_code) {
+						m_error='Script returned non-zero exit code.';
+						return null;
+					}
+				}
+				catch(err) {
+					console.error (err.stack);
+					console.error (err.message);
+					m_error='Error running script for pipeline *: '+err.message;
+					return null;
+				}
 			}
 		}
 		var P=new MLPipeline();

@@ -17,8 +17,6 @@ var mp_exe='mproc';
 var handler_opts={};
 exports.handler_opts=handler_opts;
 
-console.log('abc');
-
 if (!data_directory) {
 	console.log ('warning: data_directory is empty.');
 	return;
@@ -199,7 +197,7 @@ function larinetserver(req,onclose,callback) {
 		return;
 	}
 
-	console.log (JSON.stringify(req));
+	//console.log (JSON.stringify(req));
 
 	if (action=='prv-locate') {
 		prv_locate(req,onclose,function(resp) {
@@ -654,7 +652,7 @@ exports.RequestHandler=function() {
 };
 
 function run_process_and_read_stdout(exe,args,callback) {
-	console.log ('RUNNING:'+exe+' '+args.join(' '));
+	//console.log ('RUNNING:'+exe+' '+args.join(' '));
 	var P;
 	try {
 		P=require('child_process').spawn(exe,args);
