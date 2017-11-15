@@ -436,6 +436,20 @@ function Job(O) {
 		}
 		outputs_to_return.console_out=true;
 		console.log ('Queueing job: '+m_processor_name);
+		{
+			var inputs_str='INPUTS: ';
+			for (var iname in inputs) {
+				inputs_str+=iname+'='+inputs[iname]+'  ';
+			}
+			console.log ('  '+inputs_str);
+		}
+		{
+			var params_str='PARAMS: ';
+			for (var pname in m_parameters) {
+				params_str+=pname+'='+m_parameters[pname]+'  ';
+			}
+			console.log ('  '+params_str);
+		}
 		KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,{},function(resp) {
 			if (!resp.success) {
 				report_error(resp.error);

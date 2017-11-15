@@ -38,7 +38,7 @@ function RecentFileManager() {
 	this.recentFileCount=function() {return m_recent_files.length;};
 	this.recentFile=function(i) {return JSQ.clone(m_recent_files[i]);};
 	this.removeRecentFileAt=function(i) {m_recent_files.splice(i,1); O.emit('changed');};
-	this.addRecentFile=function(file0) {m_recent_files.push(JSQ.clone(file0);); O.emit('changed');};
+	this.addRecentFile=function(file0) {m_recent_files.push(JSQ.clone(file0)); O.emit('changed');};
 
 	var m_recent_files=[];
 

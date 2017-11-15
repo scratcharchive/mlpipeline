@@ -10,6 +10,7 @@ function MainWindow(O,options) {
 	//this.loadFromDefaultStorageIfPresent=function() {load_from_default_storage_if_present();};
 	this.loadFromFile=function() {load_from_file();};
 	this.loadFromGoogleDrive=function() {load_from_google_drive();};
+	this.loadFromDocumentObject=function(obj) {load_from_document_object(obj);};
 	this.setDocumentName=function(name) {setDocumentName(name);};
 	this.setDocumentOwner=function(owner) {setDocumentOwner(owner);};
 	this.documentName=function() {return m_document.documentName();}; 

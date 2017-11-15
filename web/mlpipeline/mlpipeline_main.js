@@ -148,8 +148,23 @@ function jsqmain(query) {
                     }
                 ]
             });
-            X.setD
-            X.loadFromBrowserStorage('default.mlp',false);
+            if (window.mlp_file_content) {
+                try {
+                    var obj=JSON.parse(window.mlp_file_content)
+                }
+                catch(err) {
+                    alert('Unable to parse json content');
+                    return;
+                }
+                setTimeout(function() {
+                    X.loadFromDocumentObject(obj);
+                    X.setDocumentName(window.mlp_file_name);
+                },500);
+                
+            }
+            else {
+                X.loadFromBrowserStorage('default.mlp',false);
+            }
             function open_mountainview() {
                 var dlg=new EditStepDialog();
                 dlg.setSpec({

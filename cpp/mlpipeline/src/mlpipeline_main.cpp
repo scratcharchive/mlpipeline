@@ -8,6 +8,8 @@
 #include <QTabWidget>
 #include <QCloseEvent>
 #include <QMainWindow>
+#include <QFileInfo>
+#include <QJsonDocument>
 #include "clparams.h"
 #include "mlpinterface.h"
 
@@ -52,6 +54,13 @@ int main(int argc, char *argv[]) {
 
     CLParams CLP(argc,argv);
 
+    QString arg1=CLP.unnamed_parameters.value(0);
+
+    QString mlp_path;
+    if (arg1.endsWith(".mlp")) {
+        mlp_path=arg1;
+    }
+
     QWebView *W=new QWebView;
     W->setPage(new MyPage());
     //TODO: Witold: this is how I find the .js source. we'll need to think of a better way
@@ -72,6 +81,12 @@ int main(int argc, char *argv[]) {
     QWebFrame *frame=W->page()->mainFrame();
     frame->addToJavaScriptWindowObject("mlpinterface",new MLPInterface(frame));
     frame->evaluateJavaScript("window.mlpipeline_mode='local';");
+
+    if (!mlp_path.isEmpty()) {
+        QString str=read_text_file(mlp_path);
+        frame->evaluateJavaScript(QString("window.mlp_file_content='%1';").arg(str));
+        frame->evaluateJavaScript(QString("window.mlp_file_name='%1';").arg(QFileInfo(mlp_path).fileName()));
+    }
 
     QWebInspector *WI=new QWebInspector;
     WI->setPage(W->page());
