@@ -21,6 +21,14 @@ if (!arg1) {
 	return;
 }
 
+if ('_params' in CLP.namedParameters) {
+	var str=require('fs').readFileSync(CLP.namedParameters['_params'],'utf-8');
+	var pp=JSON.parse(str);
+	for (var key in pp) {
+		CLP.namedParameters[key]=pp[key];
+	}
+}
+
 var txt=require('fs').readFileSync(arg1,'utf-8');
 var obj=JSON.parse(txt);
 
