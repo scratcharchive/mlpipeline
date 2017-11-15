@@ -34,6 +34,12 @@ var job_manager=new JobManager();
 var processor_manager=new ProcessorManager();
 var kulele_client=new KuleleClient();
 var larinetserver=require(__dirname+'/../../processing_server/larinet/larinetserver.js').larinetserver;
+
+if (!larinetserver) {
+	console.error('Error: larinetserver is null.');
+	return;
+}
+
 kulele_client.setLarinetServer(larinetserver);
 kulele_client.setProcessorManager(processor_manager);
 

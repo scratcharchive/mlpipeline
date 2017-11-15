@@ -10,6 +10,16 @@ var data_directory=CLP.namedParameters['data_directory']||config.data_directory|
 if (!('download_base_url' in config)) {
 	config.download_base_url="${base}/raw";
 }
+if (!data_directory) {
+	var tmp_path=get_ml_temporary_path();
+	if (!tmp_path) {
+		console.error('Error: unable to get ML temporary path. Is mountainlab installed properly?');
+		return;	
+	}
+	mkdir_if_needed(tmp_path+'/mountainlab');
+	mkdir_if_needed(tmp_path+'/mountainlab/prvbucket');
+	data_directory=tmp_path+'/mountainlab/prvbucket';
+}
 var download_base_url=config.download_base_url||'';
 var prv_exe='prv';
 var mp_exe='mproc';
@@ -17,11 +27,7 @@ var mp_exe='mproc';
 var handler_opts={};
 exports.handler_opts=handler_opts;
 
-if (!data_directory) {
-	console.log ('warning: data_directory is empty.');
-	return;
-}
-console.log ('Using data_directory='+data_directory);
+console.log ('Using data directory: '+data_directory);
 
 handler_opts.prv_exe=prv_exe;
 handler_opts.mp_exe=mp_exe;
@@ -819,6 +825,43 @@ function Download() {
 		else {
 			setTimeout(housekeeping,1000);
 		}
+	}
+}
+
+function get_ml_temporary_path() {
+	var conf=get_ml_config();
+	if (!conf) return null;
+	return (conf.general||{}).temporary_path||null;
+}
+
+function get_ml_config() {
+	var r = require('child_process').execSync('mlconfig print');
+	var str=r.toString();
+	var obj=try_parse_json(str.trim());
+	if (!obj) {
+		console.error('Error parsing json in output of mlconfig');
+		return null;
+	}
+	return obj;
+}
+
+function try_parse_json(str) {
+	try {
+		return JSON.parse(str);
+	}
+	catch(err) {
+		console.error('Error parsing json: '+err.message);
+		return null;
+	}
+}
+
+
+function mkdir_if_needed(path) {
+	try {
+		require('fs').mkdirSync(path);
+	}
+	catch(err) {
+
 	}
 }
 
