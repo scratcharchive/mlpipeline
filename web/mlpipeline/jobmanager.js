@@ -435,6 +435,7 @@ function Job(O) {
 			}
 		}
 		outputs_to_return.console_out=true;
+		console.log ('----------------------------------------------------------------------------');
 		console.log ('Queueing job: '+m_processor_name);
 		{
 			var inputs_str='INPUTS: ';
@@ -450,6 +451,7 @@ function Job(O) {
 			}
 			console.log ('  '+params_str);
 		}
+		console.log ('----------------------------------------------------------------------------');
 		KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,{},function(resp) {
 			if (!resp.success) {
 				report_error(resp.error);
@@ -467,6 +469,16 @@ function Job(O) {
 		if (m_process_id!=resp.process_id) {
 			report_error('Unexpected: process_id does not match response: '+m_process_id+'<>'+resp.process_id);
 			return;
+		}
+		if (resp.latest_console_output) {
+			var lines=resp.latest_console_output.split('\n');
+			for (var i in lines) {
+				if (lines[i].trim()) {
+					var str0='  |'+m_processor_name+'| ';
+					while (str0.length<35) str0+=' ';
+					console.log(str0+lines[i]);
+				}
+			}
 		}
 		if (resp.complete) {
 			var err0='';

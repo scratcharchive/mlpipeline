@@ -71,6 +71,7 @@ function QueuedJob() {
 	this.result=function() {return m_result;};
 	this.elapsedSinceKeepAlive=function() {return (new Date())-m_alive_timer;};
 	this.outputFilesStillValid=function() {return outputFilesStillValid();};
+	this.takeLatestConsoleOutput=function() {return takeLatestConsoleOutput();};
 
 	var m_result=null;
 	var m_alive_timer=new Date();
@@ -78,6 +79,7 @@ function QueuedJob() {
 	var m_ppp=null;
 	var m_output_file_stats={};
 	var hopts=handler_opts;
+	var m_latest_console_output='';
 
 	var request_fname,response_fname,mpreq;
 	function start(processor_name,inputs,outputs,parameters,resources,opts,callback) {
@@ -93,7 +95,7 @@ function QueuedJob() {
 	}
 	function start2() {
 		setTimeout(housekeeping,1000);
-		m_ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request','--prvbucket_path='+hopts.data_directory,request_fname,response_fname],function(txt) {
+		m_ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request','--prvbucket_path='+hopts.data_directory,request_fname,response_fname],{on_stdout:on_stdout},function(txt) {
 			remove_file(request_fname);
 			if (!require('fs').existsSync(response_fname)) {
 				m_is_complete=true;
@@ -112,6 +114,14 @@ function QueuedJob() {
 				m_result={success:false,error:'unable to parse json in response file'};
 			}
 		});
+		function on_stdout(txt) {
+			m_latest_console_output+=txt;
+		}
+	}
+	function takeLatestConsoleOutput() {
+		var ret=m_latest_console_output;
+		m_latest_console_output='';
+		return ret;
 	}
 	function cancel(callback) {
 		if (m_is_complete) {
@@ -283,7 +293,7 @@ function larinetserver(req,onclose,callback) {
 			}
 			return;
 		}
-		var ppp=run_process_and_read_stdout(hopts.prv_exe,['locate','--search_path='+hopts.data_directory,'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],function(txt) {
+		var ppp=run_process_and_read_stdout(hopts.prv_exe,['locate','--search_path='+hopts.data_directory,'--checksum='+query.checksum,'--size='+query.size,'--fcs='+(query.fcs||'')],{},function(txt) {
 			txt=txt.trim();
 			if (!starts_with(txt,hopts.data_directory+'/')) {
 				if (callback) callback({success:true,found:false});
@@ -339,7 +349,7 @@ function larinetserver(req,onclose,callback) {
 				callback({success:false,error:'Problem writing file: '+err.message});
 				return;
 			}
-			run_process_and_read_stdout(hopts.prv_exe,['stat',fname],function(txt) {
+			run_process_and_read_stdout(hopts.prv_exe,['stat',fname],{},function(txt) {
 				txt=txt.trim();
 				var stat=null;
 				try {
@@ -507,7 +517,7 @@ function larinetserver(req,onclose,callback) {
 			callback({success:false,error:'Problem writing req to file'});
 			return;
 		}
-		var ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request',req_fname,resp_fname],function(txt) {
+		var ppp=run_process_and_read_stdout(hopts.mp_exe,['handle-request',req_fname,resp_fname],{},function(txt) {
 			remove_file(req_fname);
 			if (!require('fs').existsSync(resp_fname)) {
 				callback({success:false,error:'Response file does not exist: '+resp_fname});
@@ -529,6 +539,7 @@ function larinetserver(req,onclose,callback) {
 		resp.complete=J.isComplete();
 		if (J.isComplete())
 			resp.result=J.result();
+		resp.latest_console_output=J.takeLatestConsoleOutput();
 		//callback(resp); //fixed on 10/6/17 by jfm (before we were returning undefined)
 		return resp;
 	}
@@ -657,7 +668,7 @@ exports.RequestHandler=function() {
 	};
 };
 
-function run_process_and_read_stdout(exe,args,callback) {
+function run_process_and_read_stdout(exe,args,opts,callback) {
 	//console.log ('RUNNING:'+exe+' '+args.join(' '));
 	var P;
 	try {
@@ -671,7 +682,18 @@ function run_process_and_read_stdout(exe,args,callback) {
 	var txt='';
 	P.stdout.on('data',function(chunk) {
 		txt+=chunk;
+		if (opts.on_stdout) {
+			opts.on_stdout(chunk);
+		}
 	});
+	/*
+	P.stderr.on('data',function(chunk) {
+		txt+=chunk;
+		if (opts.on_stdout) {
+			opts.on_stdout(chunk);
+		}
+	});
+	*/
 	P.on('close',function(code) {
 		callback(txt,code,'');
 	});
@@ -780,7 +802,7 @@ function Download() {
 		try {require('fs').mkdirSync(hopts.data_directory+'/_downloads');} catch(err) {}
 		var sha1=opts.sha1;
 		var output_fname=hopts.data_directory+'/_downloads/'+sha1;
-		m_ppp=run_process_and_read_stdout(exe,[address,output_fname,'--ticket='+opts.ticket],function(txt,code,err) {
+		m_ppp=run_process_and_read_stdout(exe,[address,output_fname,'--ticket='+opts.ticket],{},function(txt,code,err) {
 			if (code==0) {
 				if (!require('fs').existsSync(output_fname)) {
 					if (callback) callback({success:false,error:'Output file does not exist: '+output_fname}); callback=0;
