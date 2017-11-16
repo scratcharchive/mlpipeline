@@ -29,6 +29,8 @@ function MLPipeline() {
 	this.reorderSteps=function(new_order) {reorderSteps(new_order);};
 	this.getStepIndex=function(step) {return getStepIndex(step);};
 	this.isPipelineScript=function() {return false;};
+	this.export=function() {return m_object.export||false;};
+	this.setExport=function(val) {m_object.export=val;};
 	
 	var default_spec={
 			name:'',
@@ -41,7 +43,8 @@ function MLPipeline() {
 		spec:default_spec,
 		steps:[],
 		input_files:[],
-		output_files:[]
+		output_files:[],
+		export:false
 	};
 	var m_status='not_started'; // 'not_started','running','error','finished'
 	var m_changed_callbacks=[];
@@ -222,8 +225,10 @@ function MLPipelineScript() {
 	this.error=function() {return m_error;}; //if pipeline returns null
 	this.onChanged=function(callback) {m_changed_callbacks.push(callback);};
 	this.isPipelineScript=function() {return true;};
+	this.export=function() {return m_object.export||false;};
+	this.setExport=function(val) {return m_object.export=val;};
 
-	var m_object={name:'',script:''};
+	var m_object={name:'',script:'',export:false};
 	var m_spec=null;
 	var m_error='';
 	var m_changed_callbacks=[];

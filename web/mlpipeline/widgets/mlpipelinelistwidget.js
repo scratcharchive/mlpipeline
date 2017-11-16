@@ -47,8 +47,9 @@ function MLPipelineListWidget(O,pipeline_list_manager) {
 	function refresh() {
 		m_pipeline_rows=[];
 		m_table.clearRows();
-		m_table.setColumnCount(2);
+		m_table.setColumnCount(3);
 		m_table.headerRow().cell(1).html('Pipeline');
+		m_table.headerRow().cell(2).html('Export');
 		for (var i=0; i<pipeline_list_manager.pipelineCount(); i++) {
 			var P=pipeline_list_manager.pipeline(i);
 			var row=m_table.createRow();
@@ -106,6 +107,15 @@ function MLPipelineListWidget(O,pipeline_list_manager) {
 	      
 	    row.cell(1).empty();
 		row.cell(1).append(Name);
+	    
+	    var str0='&nbsp;&nbsp;&nbsp;';
+	    if (P.export()) str0='yes';
+	    var elmt0=$('<a href=# title="Toggle export">'+str0+'</a>')
+	    row.cell(2).append(elmt0);
+	    elmt0.click(function() {
+	    	P.setExport(!P.export());
+	    	schedule_refresh();
+	    })
 	}
 
 	function edit_row(row) {

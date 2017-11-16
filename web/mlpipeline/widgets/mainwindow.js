@@ -141,7 +141,7 @@ function MainWindow(O,options) {
 		var W=O.width();
 		var H=O.height();
 
-		var W1=250;
+		var W1=350;
 		var W2=Math.min(500,Math.max(100,W/4));
 		var Hmenu=45;
 		var Hstatus=20;
@@ -236,7 +236,7 @@ function MainWindow(O,options) {
 			}
 		}
 		if (!doc_name) {
-			doc_name=prompt('Name of document in user storage of processing server:',(m_document.documentName()||'default')+".mlp");
+			doc_name=prompt('Name of document in user storage of processing server:',remove_mlp_suffix(m_document.documentName()||'default')+".mlp");
 		}
 		if (!doc_name) {
 			if (callback) callback({success:false});
@@ -364,7 +364,7 @@ function MainWindow(O,options) {
 			}
 		}
 		if (!title) {
-			title=prompt('Title of document:',(m_document.documentName()||'default')+".mlp");
+			title=prompt('Title of document:',remove_mlp_suffix(m_document.documentName()||'default')+".mlp");
 		}
 		if (!title) {
 			finalize({success:false});

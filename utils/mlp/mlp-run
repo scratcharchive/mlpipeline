@@ -80,10 +80,17 @@ function step2() {
 	var pipeline0;
 	if (!pipeline_name) {
 		console.error('You must specify the name of a subpipeline. Your options for this file are:');
+		var num_choices=0;
 		for (var a=0; a<PLM.pipelineCount(); a++) {
-			var name0=PLM.pipeline(a).name();
-			if (name0!='main')
+			var PP=PLM.pipeline(a);
+			if (PP.export()) {
+				var name0=PP.name();
 				console.log (name0);
+				num_choices++;
+			}
+		}
+		if (num_choices===0) {
+			console.log('(No subpipelines have been exported)');
 		}
 		return;
 	}
@@ -91,6 +98,10 @@ function step2() {
 	var subpipeline=PLM.findPipeline(pipeline_name);
 	if (!subpipeline) {
 		console.error('Unable to find pipeline in document named '+pipeline_name);
+		return;
+	}
+	if (!subpipeline.export()) {
+		console.error('Unable to run subpipeline because it has not been exported.');
 		return;
 	}
 
