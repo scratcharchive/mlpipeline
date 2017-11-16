@@ -1,4 +1,10 @@
-QT += core gui widgets webkitwidgets
+QT += core gui widgets
+
+greaterThan(QT_MINOR_VERSION, 5) {
+    QT += webenginewidgets webchannel
+} else {
+    QT += webkitwidgets
+}
 
 CONFIG += c++11
 
