@@ -1,8 +1,15 @@
 #include <QApplication>
 #include <QFile>
+#if QT_VERSION >= 0x050600
+#include <QWebChannel>
+#include <QWebEngineView>
+#include <QWebEnginePage>
+#include <QWebEngineSettings>
+#else
 #include <QWebInspector>
 #include <QWebView>
 #include <QWebFrame>
+#endif
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QTabWidget>
@@ -27,18 +34,47 @@ QString read_text_file(const QString& fname, QTextCodec* codec=0)
     return ret;
 }
 
+#if QT_VERSION >= 0x050600
+class MyPage : public QWebEnginePage {
+#else
 class MyPage : public QWebPage {
+#endif
   public:
+#if QT_VERSION >= 0x050600
+    void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString & message, int lineNumber, const QString & sourceID) Q_DECL_OVERRIDE {
+#else
     void javaScriptConsoleMessage(const QString & message, int lineNumber, const QString & sourceID) Q_DECL_OVERRIDE {
+#endif
         qDebug().noquote() << QString("%1:%2: %3").arg(sourceID).arg(lineNumber).arg(message);
     }
 };
-
+#if QT_VERSION >= 0x050600
+class MyMainWidget : public QMainWindow {
+public:
+    void closeEvent(QCloseEvent *evt) Q_DECL_OVERRIDE {
+        bool val = false;
+        if (!m_close && frame) {
+            frame->runJavaScript("if (window.okay_to_close) {window.okay_to_close() } else true", [this,&val](QVariant r) {
+                val = r.toBool();
+                if (val) {
+                    m_close = true;
+                    close();
+                }
+            });
+            evt->ignore();
+        } else {
+            QMainWindow::closeEvent(evt);
+        }
+    }
+    QWebEnginePage *frame=0;
+    bool m_close = false;
+};
+#else
 class MyMainWidget : public QMainWindow {
 public:
     void closeEvent(QCloseEvent *evt) Q_DECL_OVERRIDE {
         if (frame) {
-            bool val=frame->evaluateJavaScript("okay_to_close()").toBool();
+            bool val = frame->evaluateJavaScript("okay_to_close()").toBool();
             if (!val) {
                 evt->ignore();
                 return;
@@ -48,20 +84,23 @@ public:
     }
     QWebFrame *frame=0;
 };
+#endif
 
 int main(int argc, char *argv[]) {
     QApplication a(argc,argv);
 
     CLParams CLP(argc,argv);
-
     QString arg1=CLP.unnamed_parameters.value(0);
 
     QString mlp_path;
     if (arg1.endsWith(".mlp")) {
         mlp_path=arg1;
     }
-
+#if QT_VERSION >= 0x050600
+    QWebEngineView *W=new QWebEngineView;
+#else
     QWebView *W=new QWebView;
+#endif
     W->setPage(new MyPage());
     //TODO: Witold: this is how I find the .js source. we'll need to think of a better way
     QString path=QString(MLP_DIR)+"/web/mlpipeline";
@@ -70,7 +109,20 @@ int main(int argc, char *argv[]) {
     }
     //QString html=read_text_file(path+"/index.html");
     QString url="file:///"+path+"/index.html";
-
+#if QT_VERSION >= 0x050600
+    W->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+    W->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
+    W->page()->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, true);
+    W->page()->settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
+    if (W->page()->webChannel()) {
+        delete W->page()->webChannel();
+    }
+    QWebChannel *ch = new QWebChannel(W->page());
+    W->page()->setWebChannel(ch);
+    ch->registerObject("mlpinterface", new MLPInterface(W->page()));
+    MyMainWidget main_window;
+    main_window.frame=W->page();
+#else
     W->page()->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
     W->page()->settings()->setAttribute(QWebSettings::AcceleratedCompositingEnabled, true);
     W->page()->settings()->setAttribute(QWebSettings::LocalContentCanAccessRemoteUrls, true);
@@ -93,9 +145,9 @@ int main(int argc, char *argv[]) {
 
     QWebInspector *WI=new QWebInspector;
     WI->setPage(W->page());
-
     MyMainWidget main_window;
     main_window.frame=frame;
+#endif
     //QHBoxLayout *main_layout=new QHBoxLayout;
     //main_window.setLayout(main_layout);
     QTabWidget *tab_widget=new QTabWidget;
@@ -103,9 +155,14 @@ int main(int argc, char *argv[]) {
     //main_layout->addWidget(tab_widget);
     main_window.setCentralWidget(tab_widget);
     tab_widget->addTab(W,"MLPipeline");
+#if QT_VERSION >= 0x050600
+#else
     tab_widget->addTab(WI,"Debug");
-
+#endif
     W->load(url);
+#if QT_VERSION >= 0x050600
+    W->page()->runJavaScript("window.mlpipeline_mode='local';");
+#endif
     W->setFocusPolicy(Qt::StrongFocus);
 
     main_window.showMaximized();

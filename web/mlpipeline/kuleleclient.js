@@ -677,7 +677,57 @@ var meta_processors=[
 			parameters:[
 			]
 		},
-		jobs:[{"processor_name":"mountainsort.bandpass_filter","inputs":{"timeseries":"raw"},"outputs":{"timeseries_out":"filt"},"parameters":{"samplerate":"30000","freq_min":"300","freq_max":"6000","freq_wid":"1000","quantization_unit":"","subsample_factor":""}},{"processor_name":"mountainsort.whiten","inputs":{"timeseries":"filt"},"outputs":{"timeseries_out":"pre"},"parameters":{"quantization_unit":""}},{"processor_name":"mountainsort.mountainsort3","inputs":{"timeseries":"pre","geom":"geom"},"outputs":{"firings_out":"firings1"},"parameters":{"adjacency_radius":"","consolidate_clusters":"","consolidation_factor":"","clip_size":"","detect_interval":"","detect_threshold":"","detect_sign":"1","merge_across_channels":"","fit_stage":"","t1":"","t2":""}},{"processor_name":"mountainsort.cluster_metrics","inputs":{"timeseries":"pre","firings":"firings1"},"outputs":{"cluster_metrics_out":"metrics1"},"parameters":{"samplerate":"30000"}},{"processor_name":"mountainsort.isolation_metrics","inputs":{"timeseries":"pre","firings":"firings1"},"outputs":{"metrics_out":"metrics2","pair_metrics_out":""},"parameters":{"compute_bursting_parents":"true"}},{"processor_name":"mountainsort.combine_cluster_metrics","inputs":{"metrics_list":"metrics1,metrics2"},"outputs":{"metrics_out":"metrics3"},"parameters":{}},{"processor_name":"mountainsort.run_metrics_script","inputs":{"metrics":"metrics3","script":"annotation_script"},"outputs":{"metrics_out":"metrics_annotated"},"parameters":{}},{"processor_name":"mountainsort.extract_firings","inputs":{"firings":"firings1","metrics":"metrics_annotated"},"outputs":{"firings_out":"firings"},"parameters":{"exclusion_tags":"rejected","clusters":"","t1":"","t2":""}},{"processor_name":"mountainsort.compute_templates","inputs":{"timeseries":"filt","firings":"firings1"},"outputs":{"templates_out":"templates1"},"parameters":{"clip_size":"200","clusters":""}},{"processor_name":"mountainsort.compute_templates","inputs":{"timeseries":"filt","firings":"firings"},"outputs":{"templates_out":"templates"},"parameters":{"clip_size":"200","clusters":""}}]
+		jobs:[
+		    {"processor_name":"mountainsort.bandpass_filter",
+		     "inputs":{"timeseries":"raw"},
+		     "outputs":{"timeseries_out":"filt"},
+		     "parameters":{"samplerate":"30000","freq_min":"300","freq_max":"6000","freq_wid":"1000","quantization_unit":"","subsample_factor":""}
+		    },
+		    {"processor_name":"mountainsort.whiten",
+		     "inputs":{"timeseries":"filt"},
+		     "outputs":{"timeseries_out":"pre"},
+		     "parameters":{"quantization_unit":""}
+		    },
+		    {"processor_name":"mountainsort.mountainsort3",
+		     "inputs":{"timeseries":"pre","geom":"geom"},
+		     "outputs":{"firings_out":"firings1"},
+		     "parameters":{"adjacency_radius":"","consolidate_clusters":"","consolidation_factor":"","clip_size":"","detect_interval":"","detect_threshold":"","detect_sign":"1","merge_across_channels":"","fit_stage":"","t1":"","t2":""}
+		    },
+		    {"processor_name":"mountainsort.cluster_metrics",
+		     "inputs":{"timeseries":"pre","firings":"firings1"},
+		     "outputs":{"cluster_metrics_out":"metrics1"},
+		     "parameters":{"samplerate":"30000"}
+		    },
+		    {"processor_name":"mountainsort.isolation_metrics",
+		     "inputs":{"timeseries":"pre","firings":"firings1"},
+		     "outputs":{"metrics_out":"metrics2","pair_metrics_out":""},
+		     "parameters":{"compute_bursting_parents":"true"}
+		    },
+		    {"processor_name":"mountainsort.combine_cluster_metrics",
+		     "inputs":{"metrics_list":"metrics1,metrics2"},
+		     "outputs":{"metrics_out":"metrics3"},
+		     "parameters":{}
+		    },
+		    {"processor_name":"mountainsort.run_metrics_script",
+		     "inputs":{"metrics":"metrics3","script":"annotation_script"},
+		     "outputs":{"metrics_out":"metrics_annotated"},
+		     "parameters":{}
+		    },
+		    {"processor_name":"mountainsort.extract_firings",
+		     "inputs":{"firings":"firings1","metrics":"metrics_annotated"},
+		     "outputs":{"firings_out":"firings"},
+		     "parameters":{"exclusion_tags":"rejected","clusters":"","t1":"","t2":""}
+		    },
+		    {"processor_name":"mountainsort.compute_templates",
+		     "inputs":{"timeseries":"filt","firings":"firings1"},
+		     "outputs":{"templates_out":"templates1"},
+		     "parameters":{"clip_size":"200","clusters":""}
+		    },
+		    {"processor_name":"mountainsort.compute_templates",
+		     "inputs":{"timeseries":"filt","firings":"firings"},
+		     "outputs":{"templates_out":"templates"},
+		     "parameters":{"clip_size":"200","clusters":""}
+		    }]
 	}
 ];
 */

@@ -15,8 +15,11 @@ void write_text_file(const QString& path, const QString& txt)
     QTextStream out(&f);
     out << txt;
 }
-
+#if QT_VERSION >= 0x050600
+MLPInterface::MLPInterface(QWebEnginePage *frame_in)
+#else
 MLPInterface::MLPInterface(QWebFrame *frame_in)
+#endif
 {
     frame=frame_in;
 }
@@ -57,6 +60,10 @@ void MLPInterface::larinetserver(QString req_json,QString callback_str)
     response["success"]=true;
     QString str=QString("%1('%2');").arg(callback_str).arg((QString)QJsonDocument(response).toJson(QJsonDocument::Compact));
     qDebug().noquote() << str;
+#if QT_VERSION >= 0x050600
+    frame->runJavaScript(str);
+#else
     frame->evaluateJavaScript(str);
+#endif
 }
 
