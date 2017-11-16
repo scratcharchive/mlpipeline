@@ -1,0 +1,17 @@
+mlpipeline (0.1ubuntu2) xenial; urgency=medium
+
+  * Update
+
+ -- Witold Wysota <wysota@wysota.org>  Thu, 16 Nov 2017 17:44:04 +0100
+
+mlpipeline (0.1ubuntu1) xenial; urgency=medium
+
+  * Included nodejs files
+
+ -- Witold Wysota <wysota@wysota.org>  Fri, 10 Nov 2017 11:29:33 +0100
+
+mlpipeline (0.1) xenial; urgency=medium
+
+  * Initial Release.
+
+ -- Witold Wysota <wysota@wysota.org>  Wed, 08 Nov 2017 23:31:51 +0100
