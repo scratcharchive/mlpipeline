@@ -24,5 +24,5 @@ export QT_SELECT=qt5
 #	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
 
 override_dh_auto_configure:
-	echo `dh_auto_configure --no-act -- |sed -e 's/-nocache//'`
-	eval `dh_auto_configure --no-act -- |sed -e 's/-nocache//'`
+	echo `dh_auto_configure --no-act -- MLP_DIR=/usr/share/mlpipeline |sed -e 's/-nocache//'`
+	eval `dh_auto_configure --no-act -- MLP_DIR=/usr/share/mlpipeline |sed -e 's/-nocache//'`

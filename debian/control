@@ -7,7 +7,7 @@ Standards-Version: 3.9.8
 
 Package: mlpipeline
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, mountainlab, libqt5widgets5, libqt5webkit5, nodejs
+Depends: ${shlibs:Depends}, ${misc:Depends}, mountainlab, libqt5widgets5, libqt5webkit5, nodejs, node-express
 Description: MountainLab tool for creating, running, and sharing analysis pipelines.
  The software comprises tools for processing electrophysiological recordings and
  for visualizing and validating the results.
