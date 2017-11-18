@@ -84,8 +84,11 @@ int main(int argc, char *argv[]) {
 
     if (!mlp_path.isEmpty()) {
         QString str=read_text_file(mlp_path);
-        frame->evaluateJavaScript(QString("window.mlp_file_content='%1';").arg(str));
+        frame->evaluateJavaScript(QString("window.mlp_file_content=atob('%1');").arg((QString)str.toUtf8().toBase64()));
         frame->evaluateJavaScript(QString("window.mlp_file_name='%1';").arg(QFileInfo(mlp_path).fileName()));
+    }
+    else {
+        frame->evaluateJavaScript(QString("window.mlp_load_default_browser_storage=true;"));
     }
 
     QWebInspector *WI=new QWebInspector;

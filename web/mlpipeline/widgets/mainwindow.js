@@ -217,13 +217,20 @@ function MainWindow(O,options) {
 
 	function save_to_file() {
 		if (!check_ok_to_save()) return;
-		var doc_name=prompt('Name of JSON document:',remove_mlp_suffix(m_document.documentName()||'default')+'.mlp');
+
+		var default_doc_name=remove_mlp_suffix(m_document.documentName()||'default')+'.mlp';
 		var obj=get_document_object();
-		download(JSON.stringify(obj),doc_name);
-		setDocumentName(doc_name);
-		m_last_saved_document_object=m_document.toObject();
-		m_status_bar.setLastAction('Saved to file.',5000);
-		m_is_docstor_document=false;
+		if (m_kulele_client.localMode()) {
+			download(JSON.stringify(obj),default_doc_name);
+		}
+		else {
+			var doc_name=prompt('Name of JSON document:',default_doc_name);
+			download(JSON.stringify(obj),doc_name);
+			setDocumentName(doc_name);
+			m_last_saved_document_object=m_document.toObject();
+			m_status_bar.setLastAction('Saved to file.',5000);
+			m_is_docstor_document=false;
+		}
 	}
 
 	function load_from_processing_server(userid,doc_name,promptsave,callback) {

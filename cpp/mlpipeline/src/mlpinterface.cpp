@@ -32,6 +32,7 @@ void MLPInterface::open_mountainview(QString mv2_json)
     QString tmp_path=QDir::tempPath()+"/tmp.mv2";
     write_text_file(tmp_path,mv2_json);
     QString cmd=QString("mountainview %1").arg(tmp_path);
+    qDebug().noquote() << "Running: "+cmd;
     QProcess::startDetached(cmd);
 }
 

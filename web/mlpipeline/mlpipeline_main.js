@@ -163,7 +163,8 @@ function jsqmain(query) {
                 
             }
             else {
-                X.loadFromBrowserStorage('default.mlp',false);
+                if (window.mlp_load_default_browser_storage)
+                    X.loadFromBrowserStorage('default.mlp',false);
             }
             function open_mountainview() {
                 var dlg=new EditStepDialog();

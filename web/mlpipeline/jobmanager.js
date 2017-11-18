@@ -189,7 +189,7 @@ function JobManager(O) {
 			return;
 		}
 		setTimeout(function() {
-			handle_top_level_job(top_level_pipeline_name,job,callback);
+			handle_top_level_job(top_level_pipeline_name,job);
 		},100);
 	}
 	function find_step_producing_file(pipeline0,file_name) {
