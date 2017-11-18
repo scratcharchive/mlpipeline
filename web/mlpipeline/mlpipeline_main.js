@@ -123,7 +123,7 @@ function jsqmain(query) {
         // test the connection to larinet
         X.kuleleClient().getProcessorSpec(function(tmp) {
             if (!tmp.success) {
-                show_full_browser_message('Unable to connect to local larinet server.','You must start the larinet service on your computer before running mlpipeline locally. <br /> It won\'t take very long.<br /><br /> For instructions, see README_larinet.txt');
+                show_full_browser_message('Unable to connect to local larinet server.','You must start the larinet service on your computer before running mlpipeline locally. <br /><br /> Simply open a new terminal and run "mlp-larinet". Keep it running while you are using mlpipeline.');
                 return;
             }
             X.showFullBrowser();
