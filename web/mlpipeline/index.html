@@ -66,7 +66,7 @@ $(document).ready(function() {
         $('body').keydown(function(e) {
                 JSQ._handle_key_press(e);
         });
-        if (qt) {
+        if (window.qt) {
             // this triggers only when opened in QWebEngineView
             new QWebChannel(qt.webChannelTransport, function(channel) {
                 window.mlpinterface = channel.objects.mlpinterface

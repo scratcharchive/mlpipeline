@@ -69,7 +69,7 @@ public:
     void closeEvent(QCloseEvent *evt) Q_DECL_OVERRIDE {
         bool val = false;
         if (!m_close && frame) {
-            frame->runJavaScript("if (window.okay_to_close) {window.okay_to_close() } else true", [this,&val](QVariant r) {
+            frame->runJavaScript("if (window.okay_to_close) { window.okay_to_close() } else true", [this,&val](QVariant r) {
                 val = r.toBool();
                 if (val) {
                     m_close = true;
@@ -89,7 +89,7 @@ class MyMainWidget : public QMainWindow {
 public:
     void closeEvent(QCloseEvent *evt) Q_DECL_OVERRIDE {
         if (frame) {
-            bool val = frame->evaluateJavaScript("okay_to_close()").toBool();
+            bool val = frame->evaluateJavaScript("if (window.okay_to_close) { window.okay_to_close() } else true").toBool();
             if (!val) {
                 evt->ignore();
                 return;
