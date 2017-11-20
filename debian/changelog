@@ -1,3 +1,27 @@
+mlpipeline (0.11.5-beta1) xenial; urgency=medium
+
+  * trying once again to install mlp-run and mlp-larinet properly  
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Mon, 20 Nov 2017 15:11:31 -0500
+
+mlpipeline (0.11.4-beta1) xenial; urgency=medium
+
+  * trying again to install mlp-run and mlp-larinet properly 
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Mon, 20 Nov 2017 14:56:33 -0500
+
+mlpipeline (0.11.3-beta1) xenial; urgency=medium
+
+  * trying again to install mlp-run and mlp-larinet properly
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Mon, 20 Nov 2017 14:47:41 -0500
+
+mlpipeline (0.11.2-beta1) xenial; urgency=medium
+
+  * trying to install mlp-run and mlp-larinet
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Mon, 20 Nov 2017 14:39:02 -0500
+
 mlpipeline (0.11.1-beta1) xenial; urgency=medium
 
   * trying to get mlp-run into the path
