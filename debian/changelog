@@ -1,3 +1,9 @@
+mlpipeline (0.11.1-beta1) xenial; urgency=medium
+
+  * trying to get mlp-run into the path
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Mon, 20 Nov 2017 14:11:55 -0500
+
 mlpipeline (0.11-beta1) xenial; urgency=medium
 
   * prelim beta build
