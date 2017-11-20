@@ -1,3 +1,9 @@
+mlpipeline (0.11-beta1) xenial; urgency=medium
+
+  * prelim beta build
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Mon, 20 Nov 2017 12:28:32 -0500
+
 mlpipeline (0.1ubuntu7) xenial; urgency=medium
 
   * Fixed index.html
