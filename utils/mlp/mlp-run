@@ -192,12 +192,31 @@ function step2() {
 			for (var okey in output_files) {
 				if (okey in CLP.namedParameters) {
 					var prv=output_files[okey].prv;
-					console.log ('Copying output '+okey+' to '+CLP.namedParameters[okey]);
-					copy_file_sync(prv.original_path,CLP.namedParameters[okey]);
+					if (!copy_is_needed(prv.original_path,CLP.namedParameters[okey])) {
+						console.log ('No change in output file: '+CLP.namedParameters[okey]);
+					}
+					else {
+						console.log ('Copying output '+okey+' to '+CLP.namedParameters[okey]);
+						copy_file_sync(prv.original_path,CLP.namedParameters[okey]);
+					}
 				}
 			}
 		}); 
 	}
+}
+
+function copy_is_needed(src,dst) {
+	if (!require('fs').existsSync(dst))
+		return true;
+	var stat_src=require('fs').statSync(src);
+	var stat_dst=require('fs').statSync(dst);
+	if (stat_src.size!=stat_dst.size)
+		return true;
+	var prv_stat_src=prv_stat_sync(src);
+	var prv_stat_dst=prv_stat_sync(dst);
+	if (prv_stat_src.checksum==prv_stat_dst.checksum)
+		return false;
+	return true;
 }
 
 function foreach_async(list,func,callback) {
