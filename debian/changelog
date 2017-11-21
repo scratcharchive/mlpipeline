@@ -1,3 +1,9 @@
+mlpipeline (0.11.5-beta2) xenial; urgency=medium
+
+  * Prelim debian build
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Tue, 21 Nov 2017 05:14:05 -0500
+
 mlpipeline (0.11.5-beta1) xenial; urgency=medium
 
   * trying once again to install mlp-run and mlp-larinet properly  
