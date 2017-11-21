@@ -4,7 +4,7 @@ Instructions:
 
 If you installed mlpipeline via package manager (e.g. apt install), then just do the following
 
-> larinet --data_directory=/path/to/prvbucket
+> mlp-larinet --data_directory=/path/to/prvbucket
 
 where /path/to/prvbucket is the directory where MLPipeline will store intermediate (and other) files.
 
