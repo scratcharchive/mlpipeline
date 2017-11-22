@@ -1,3 +1,4 @@
+#!/usr/bin/env nodejs
 /*
  * Copyright 2016-2017 Flatiron Institute, Simons Foundation
  *
@@ -13,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#!/usr/bin/env nodejs
 
 var config=read_json_file(__dirname+'/kulelepoller.user.json');
 if (!config) {
