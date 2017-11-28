@@ -204,8 +204,8 @@ function JobManager(O) {
 			return;
 		}
 		setTimeout(function() {
-			handle_top_level_job(top_level_pipeline_name,job);
-		},100);
+			handle_top_level_job(top_level_pipeline_name,job,step);
+		},1000);
 	}
 	function find_step_producing_file(pipeline0,file_name) {
 		for (var i=0; i<pipeline0.stepCount(); i++) {
@@ -491,7 +491,7 @@ function Job(O) {
 				if (lines[i].trim()) {
 					var str0='  |'+m_processor_name+'| ';
 					while (str0.length<35) str0+=' ';
-					console.log(str0+lines[i]);
+					console.log (str0+lines[i]);
 				}
 			}
 		}
