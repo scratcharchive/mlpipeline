@@ -82,7 +82,7 @@ function MainWindow(O,options) {
     m_input_file_widget.setKuleleClient(m_kulele_client);
     JSQ.connect(m_input_file_widget,'open_banjoview',O,function(sender,args) {open_banjoview(args.prvrec);});
     JSQ.connect(m_input_file_widget,'view_text_file',O,function(sender,args) {view_text_file(args.name,args.prvrec);});
-    JSQ.connect(m_input_file_widget,'download-s3-file-to-processing-server',O,function(sender,args) {download_s3_file_to_processing_server(args);});
+    JSQ.connect(m_input_file_widget,'download-rb-file-to-processing-server',O,function(sender,args) {download_rb_file_to_processing_server(args);});
 
     var output_file_manager=m_document.outputFileManager();
     var m_output_file_widget=new PrvListWidget(0,output_file_manager);
@@ -90,7 +90,7 @@ function MainWindow(O,options) {
     m_output_file_widget.setLabel1('Output files');
     JSQ.connect(m_output_file_widget,'open_banjoview',O,function(sender,args) {open_banjoview(args.prvrec);});
     JSQ.connect(m_output_file_widget,'view_text_file',O,function(sender,args) {view_text_file(args.name,args.prvrec);});
-    JSQ.connect(m_output_file_widget,'download-s3-file-to-processing-server',O,function(sender,args) {download_s3_file_to_processing_server(args);});
+    JSQ.connect(m_output_file_widget,'download-rb-file-to-processing-server',O,function(sender,args) {download_rb_file_to_processing_server(args);});
 
     JSQ.connect(m_edit_pipeline_widget,'start_job',O,function(sender,args) {start_job(args.step,m_pipeline_list_widget.currentPipeline().name());});;
     JSQ.connect(m_edit_pipeline_widget,'stop_job',O,function(sender,args) {stop_job(args.job);});;
@@ -829,8 +829,8 @@ function MainWindow(O,options) {
 		});
 	}
 
-	function download_s3_file_to_processing_server(args) {
-		m_ps_download_manager.start({"s3_address":args.s3_address,"sha1":args.sha1});
+	function download_rb_file_to_processing_server(args) {
+		m_ps_download_manager.start({"rb_address":args.rb_address,"sha1":args.sha1});
 	}
 
 	function start_job(step,parent_pipeline_name) {

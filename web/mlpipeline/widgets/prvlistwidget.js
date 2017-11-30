@@ -155,13 +155,12 @@ function PrvListWidget(O,prv_list_manager) {
       }
       row.cell(2).append(Name);
       
-      
       On_server.empty();
       var elmt;
-      if ((!prvrec.on_server)&&(prvrec.on_s3)) {
-        elmt=$('<a href=#><span class=on_s3 title="Download '+prvrec.s3_address+' to processing server">On S3</span></a>');
+      if ((!prvrec.on_server)&&(prvrec.on_rb)) {
+        elmt=$('<a href=#><span class=on_rb title="Download from rawbucket to processing server">On RB</span></a>');
         elmt.click(function() {
-          O.emit('download-s3-file-to-processing-server',{s3_address:prvrec.s3_address,sha1:prvrec.prv.original_checksum});
+          O.emit('download-rb-file-to-processing-server',{rb_address:prvrec.rb_address,sha1:prvrec.prv.original_checksum});
         });
       }
       else {

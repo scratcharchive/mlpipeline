@@ -32,7 +32,8 @@ function PrvListManager(O) {
   this.prv=function(name) {return (O.prvRecord(name)||{}).prv||null;};
   this.prvRecordNames=function() {return prvRecordNames();};
   this.checkOnServer=function(prv_name) {checkOnServer(prv_name);};
-  this.checkOnS3=function(prv_name,bucket) {checkOnS3(prv_name,bucket);};
+  //this.checkOnS3=function(prv_name,bucket) {checkOnS3(prv_name,bucket);};
+  this.checkOnRB=function(prv_name) {checkOnRB(prv_name);};
   this.clearPrvRecords=function() {m_prv_records=[]; O.emit('changed');};
   this.renamePrvRecord=function(name,new_name) {return renamePrvRecord(name,new_name);};
   this.fromObject=function(storage_object) {fromObject(storage_object);};
@@ -93,7 +94,8 @@ function PrvListManager(O) {
     }
     m_kulele_client.prvLocate(prvrec.prv,function(tmp) {
       if ((!tmp.success)||(!tmp.found)) {
-        checkOnS3(name,'mountainlab');
+        //checkOnS3(name,'mountainlab');
+        checkOnRB(name);
       }
       if (!tmp.success) {
         set_val(undefined);
@@ -109,6 +111,7 @@ function PrvListManager(O) {
       }
     }
   }
+  /*
   function checkOnS3(name,bucket) {
     var prvrec=m_prv_records[name]||null;
     if (!prvrec) return;
@@ -138,6 +141,39 @@ function PrvListManager(O) {
       if ((prvrec.on_s3!==val)||(prvrec.s3_address!=s3_address)) {
         prvrec.on_s3=val;
         prvrec.s3_address=s3_address;
+        O.emit('changed');
+      }
+    }
+  }
+  */
+  function checkOnRB(name) {
+    var prvrec=m_prv_records[name]||null;
+    if (!prvrec) return;
+    if (prvrec.content) return;
+    var url='http://river.simonsfoundation.org/stat/'+prvrec.prv.original_checksum;
+    jsu_http_get_json(url,{},function(tmp) {
+      if (!tmp.success) {
+        console.log ('Error checking on RB: '+tmp.error);
+        set_val(undefined,'');
+        return;
+      }
+      tmp=tmp.object;
+      if (!tmp.success) {
+        set_val(false,'');
+        return;
+      }
+      if (tmp.size!=prvrec.prv.original_size) {
+        console.log ('Incorrect size for file found on RB: '+tmp.size+' <> '+prvrec.prv.original_size);
+        set_val(false,'');
+        return;
+      }
+      set_val(true,'http://river.simonsfoundation.org/download/'+prvrec.prv.original_checksum);
+    });
+    function set_val(val,rb_address) {
+      if (!prvrec) return;
+      if ((prvrec.on_rb!==val)||(prvrec.rb_address!=rb_address)) {
+        prvrec.on_rb=val;
+        prvrec.rb_address=rb_address;
         O.emit('changed');
       }
     }
