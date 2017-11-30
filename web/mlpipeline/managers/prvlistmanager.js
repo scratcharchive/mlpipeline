@@ -150,7 +150,7 @@ function PrvListManager(O) {
     var prvrec=m_prv_records[name]||null;
     if (!prvrec) return;
     if (prvrec.content) return;
-    var url='http://river.simonsfoundation.org/stat/'+prvrec.prv.original_checksum;
+    var url='https://river.simonsfoundation.org/stat/'+prvrec.prv.original_checksum;
     jsu_http_get_json(url,{},function(tmp) {
       if (!tmp.success) {
         console.log ('Error checking on RB: '+tmp.error);
@@ -167,7 +167,7 @@ function PrvListManager(O) {
         set_val(false,'');
         return;
       }
-      set_val(true,'http://river.simonsfoundation.org/download/'+prvrec.prv.original_checksum);
+      set_val(true,'https://river.simonsfoundation.org/download/'+prvrec.prv.original_checksum);
     });
     function set_val(val,rb_address) {
       if (!prvrec) return;
