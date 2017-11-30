@@ -1,3 +1,9 @@
+mlpipeline (0.11.5-beta3) xenial; urgency=medium
+
+  * fix bug so that pending processes are eventually run
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Tue, 28 Nov 2017 11:57:39 -0500
+
 mlpipeline (0.11.5-beta2) xenial; urgency=medium
 
   * Prelim debian build
