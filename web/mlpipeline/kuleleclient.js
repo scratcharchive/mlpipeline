@@ -519,6 +519,8 @@ function KuleleClient(O) {
 		  var url0=tmp.url;
 		  if (m_local_mode)
 		  	url0=tmp.full_path;
+		  else
+		  	url0=url0.split('${base}').join(m_kulele_url+'/subserver/'+m_subserver_name);
 		  console.log ('Opening: '+url0);
 		  window.open(url0,'_blank');
 		});
