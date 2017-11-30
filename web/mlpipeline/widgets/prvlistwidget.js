@@ -178,13 +178,20 @@ function PrvListWidget(O,prv_list_manager) {
         remove_button.click(function() {ask_remove_prv(name);});
       }
             
-      var download_prv_button=$('<a class=download2_button title="Download this .prv file" />');
-      B2.append(download_prv_button);
-      download_prv_button.click(function() {download_prv(name);});
+      if (!content) { //it is a prv file
+        var download_prv_button=$('<a class=download2_button title="Download this .prv file" />');
+        B2.append(download_prv_button);
+        download_prv_button.click(function() {download_prv(name);});
 
-      var download_raw_button=$('<a class=download_button title="Download the raw file corresponding to this PRV" />');
-      B2.append(download_raw_button);
-      download_raw_button.click(function() {download_raw(name);});
+        var download_raw_button=$('<a class=download_button title="Download the raw file corresponding to this PRV" />');
+        B2.append(download_raw_button);
+        download_raw_button.click(function() {download_raw(name);});
+      }
+      else {
+        var download_content_button=$('<a class=download_button title="Download this file" />');
+        B2.append(download_content_button);
+        download_content_button.click(function() {download_content(name);});        
+      }
 
       if (jsu_ends_with(name,'.banjoview')) {
         var view_button=$('<a class=view_button title="View in new window" />');
@@ -353,6 +360,16 @@ function PrvListWidget(O,prv_list_manager) {
     var prv=prvrec.prv;
     var KS=prv_list_manager.kuleleClient();
     KS.downloadRawFromPrv(prv);
+  }
+
+  function download_content(name) {
+    var prvrec=prv_list_manager.prvRecord(name);
+    if (!prvrec) return;
+    if (!prvrec.content) {
+      alert('Content is null');
+      return;
+    }
+    download(prvrec.content,name);
   }
 
   function open_banjoview(name) {
