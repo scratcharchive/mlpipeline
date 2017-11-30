@@ -369,7 +369,7 @@ function PrvListWidget(O,prv_list_manager) {
       alert('Content is null');
       return;
     }
-    download(prvrec.content,name);
+    download(JSON.stringify(prvrec.content),name);
   }
 
   function open_banjoview(name) {
