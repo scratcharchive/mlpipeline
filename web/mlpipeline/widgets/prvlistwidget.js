@@ -27,6 +27,7 @@ function PrvListWidget(O,prv_list_manager) {
   this.setRenameAllowed=function(val) {m_rename_allowed=val; O.refresh();};
   this.setKuleleClient=function(KC) {m_kulele_client=KC;};
   this.registerViewPlugin=function(VP) {m_view_plugins.push(VP);};
+  this.setRemoteFileManager=function(RFM) {setRemoteFileManager(RFM);};
 
   var m_table=new MLTableWidget();
   var m_processing_pipeline=null;
@@ -36,6 +37,7 @@ function PrvListWidget(O,prv_list_manager) {
   var m_rename_allowed=true;
   var m_kulele_client=null;
   var m_view_plugins=[];
+  var m_remote_file_manager=null;
   m_table.setRowsMoveable(false);
   
   O.div().append(m_table.div());
@@ -156,17 +158,41 @@ function PrvListWidget(O,prv_list_manager) {
       row.cell(2).append(Name);
       
       On_server.empty();
-      var elmt;
-      if ((!prvrec.on_server)&&(prvrec.on_rb)) {
-        elmt=$('<a href=#><span class=on_rb title="Download from rawbucket to processing server">On RB</span></a>');
-        elmt.click(function() {
-          O.emit('download-rb-file-to-processing-server',{rb_address:prvrec.rb_address,sha1:prvrec.prv.original_checksum});
-        });
+
+      //var elmt=bool2yesno(prvrec.on_server);
+      if (prvrec.prv) {
+        var elmt1=get_status_element_for_prv_server_status(prvrec.prv);
+        var elmt2=get_status_element_for_prv_rb_status(prvrec.prv);
+
+        On_server.append(elmt1);
+        On_server.append('&nbsp;|&nbsp;');
+        On_server.append(elmt2);
+
+        /*
+        if (prvrec.on_rb) {
+          var txt='On RB';
+          if (prvrec.downloading_to_server) {
+            txt+=' ('+prvrec.downloading_to_server_message+')';
+          }
+          var elmt0=$('<span class=on_rb>'+txt+'</span>');
+          if ((!prvrec.on_server)&&(!prvrec.downloading_to_server)) {
+            var elmt1=$('<a href=#></a>');
+            elmt0.attr('title',"Click to download from rawbucket to processing server");
+            elmt1.append(elmt0);
+            elmt1.click(function() {
+              O.emit('download-rb-file-to-processing-server',{sha1:prvrec.prv.original_checksum});
+            });
+            elmt.append('&nbsp;');
+            elmt.append(elmt1);
+          }
+          else {
+            elmt.append('&nbsp;');
+            elmt.append(elmt0);
+          }
+        }
+        On_server.append(elmt);
+        */
       }
-      else {
-        elmt=bool2yesno(prvrec.on_server)
-      }
-      On_server.append(elmt);
 
       //tr.find('#fname').html(jsu_file_parts(prv.original_path).file_name);
       //tr.find('#checksum').html(prv.original_checksum);
@@ -229,6 +255,86 @@ function PrvListWidget(O,prv_list_manager) {
         }
       })
       */
+  }
+
+  function get_status_element_for_prv_server_status(prv) {
+    if (!m_remote_file_manager) {
+      return $('<span>Remote file manager not set</span>');
+    }
+    var status0=m_remote_file_manager.prvServerStatus(prv);
+    var elmt;
+    if (status0.status=='on_server') {
+      elmt=$('<span class=yes title="This file was found on the processing server.">Yes</span>');
+    }
+    else if (status0.status=='not_on_server') {
+      elmt=$('<span class=no title="This file is not on the processing server.">No</span>');
+    }
+    else if (status0.status=='checking') {
+      elmt=$('<span class=unknown title="Checking for file on the processing server...">Checking</span>');  
+    }
+    else if (status0.status=='downloading') {
+      elmt=$('<span class=unknown title="Downloading: '+status0.message+'">Downloading</span>');  
+    }
+    else if (status0.status=='unknown') {
+      elmt=$('<span class=unknown title="It is unknown whether this file is on the processing server.">Unknown</span>');
+      m_remote_file_manager.checkPrvServerStatus(prv);
+    }
+    else if (status0.status=='error') {
+      elmt=$('<span class=unknown title="Error checking for file: '+status0.message+'">Error checking</span>');  
+    }
+    else {
+      elmt=$('<span class=unknown>'+status0.status+'</span>');    
+    }
+    return elmt;
+  }
+
+  function get_status_element_for_prv_rb_status(prv) {
+    if (!m_remote_file_manager) {
+      return $('<span>Remote file manager not set</span>');
+    }
+    var server_status=m_remote_file_manager.prvServerStatus(prv);
+    var status0=m_remote_file_manager.prvRBStatus(prv);
+    var elmt;
+    if (status0.status=='on_rb') {
+      elmt=$('<span class=yes title="This file is in the rawbucket.">On RB</span>');
+      if (server_status.status=='not_on_server') {
+        //make link to click to download to processing server
+        var elmt1=$('<a href=#></a>');
+        elmt.attr('title',"Click to download from rawbucket to processing server.");
+        elmt1.click(function() {
+          O.emit('download-rb-file-to-processing-server',{sha1:prv.original_checksum});
+        });
+        elmt1.append(elmt);
+        elmt=elmt1;
+      }
+    }
+    else if (status0.status=='not_on_server') {
+      elmt=$('<span class=no title="This file is not in the rawbucket.">--</span>');
+    }
+    else if (status0.status=='checking') {
+      elmt=$('<span class=unknown title="Checking for file in the rawbucket.">--</span>');  
+    }
+    else if (status0.status=='unknown') {
+      elmt=$('<span class=unknown title="It is unknown whether this file in the raw bucket">-</span>');
+      m_remote_file_manager.checkPrvRBStatus(prv);
+    }
+    else if (status0.status=='error') {
+      elmt=$('<span class=unknown title="Error checking rawbucket: '+status0.message+'">---</span>');  
+    }
+    else {
+      elmt=$('<span class=unknown> title="RB status: '+status0.status+'">--</span>');    
+    }
+    return elmt;
+  }
+
+  function setRemoteFileManager(RFM) {
+    m_remote_file_manager=RFM;
+    m_remote_file_manager.onPrvServerStatusChanged(function(sha1) {
+      schedule_refresh();
+    });
+    m_remote_file_manager.onPrvRBStatusChanged(function(sha1) {
+      schedule_refresh();
+    });
   }
 
   function edit_prv(name) {

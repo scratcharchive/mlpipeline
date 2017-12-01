@@ -55,7 +55,7 @@ opts.SCRIPTS.push(
 
 opts.SOURCEPATH.push('managers')
 opts.SCRIPTS.push(
-	'prvlistmanager.js','processormanager.js','mlpipelinelistmanager.js'
+	'prvlistmanager.js','processormanager.js','mlpipelinelistmanager.js','remotefilemanager.js'
 );
 
 opts.SOURCEPATH.push('jsutils')

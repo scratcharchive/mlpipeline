@@ -39,6 +39,7 @@
 <script src="managers/prvlistmanager.js"></script>
 <script src="managers/processormanager.js"></script>
 <script src="managers/mlpipelinelistmanager.js"></script>
+<script src="managers/remotefilemanager.js"></script>
 <script src="jsutils/jsutils.js"></script>
 <script src="jsutils/fileuploader.js"></script>
 <script src="jsutils/localstorage.js"></script>
@@ -51,7 +52,6 @@
 <script src="./jshint/jshint.js"></script>
 <script src="./CodeMirror/addon/lint/lint.js"></script>
 <script src="./CodeMirror/addon/lint/javascript-lint.js"></script>
-<script src="qrc:///qtwebchannel/qwebchannel.js"></script>
 <link rel="stylesheet" type="text/css" href="jsq/src/jsqcore/jsq.css">
 <link rel="stylesheet" type="text/css" href="jsq/src/jsqcore/jquery-ui.min.css">
 <link rel="stylesheet" type="text/css" href="./editmlpipelinewidget.css">
@@ -61,23 +61,12 @@
 <link rel="stylesheet" type="text/css" href="./CodeMirror/addon/lint/lint.css">
 
 <script>
-
 $(document).ready(function() {
-        $('body').keydown(function(e) {
-                JSQ._handle_key_press(e);
-        });
-        if (window.qt) {
-            // this triggers only when opened in QWebEngineView
-            new QWebChannel(qt.webChannelTransport, function(channel) {
-                window.mlpinterface = channel.objects.mlpinterface
-                window.mlpipeline_mode='local'
-                var query=parse_url_params();
-                jsqmain(query);
-            })
-        } else {
-            var query=parse_url_params();
-            jsqmain(query);
-        }
+	$('body').keydown(function(e) {
+		JSQ._handle_key_press(e);
+	});
+	var query=parse_url_params();
+	jsqmain(query);
 });
 
 function parse_url_params() {
