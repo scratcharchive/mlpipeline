@@ -150,7 +150,7 @@ function RemoteFileManager() {
 					var elapsed=Math.floor(((new Date())-timer0)/1000);
 					console.log ('Downloading file from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
 					set_prv_server_status(prv,'downloading','Downloading '+(prv.original_size/(1024*1024))+' MB from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
-					setTimeout(do_probe,1000);
+					setTimeout(do_probe,3000);
 					return;
 				}
 				else if (A.status=='finished') {
