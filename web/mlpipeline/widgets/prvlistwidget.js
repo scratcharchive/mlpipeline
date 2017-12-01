@@ -97,23 +97,26 @@ function PrvListWidget(O,prv_list_manager) {
   }
 
   function format_file_size(size_bytes) {
-    if (size_bytes>10e9) {
-      return Math.floor(size_bytes/1e9)+' GB';
+    var a=1024;
+    var aa=a*a;
+    var aaa=a*a*a;
+    if (size_bytes>aaa) {
+      return Math.floor(size_bytes/aaa)+' GB';
     }
-    else if (size_bytes>1e9) {
-      return Math.floor(size_bytes/1e8)/10+' GB';  
+    else if (size_bytes>aaa) {
+      return Math.floor(size_bytes/(aaa/10))/10+' GB';  
     }
-    else if (size_bytes>10e6) {
-      return Math.floor(size_bytes/1e6)+' MB';
+    else if (size_bytes>aa) {
+      return Math.floor(size_bytes/aa)+' MB';
     }
-    else if (size_bytes>1e6) {
-      return Math.floor(size_bytes/1e5)/10+' MB';  
+    else if (size_bytes>aa) {
+      return Math.floor(size_bytes/(aa/10))/10+' MB';  
     }
-    else if (size_bytes>10e3) {
-      return Math.floor(size_bytes/1e3)+' KB';
+    else if (size_bytes>10*a) {
+      return Math.floor(size_bytes/a)+' KB';
     }
-    else if (size_bytes>1e3) {
-      return Math.floor(size_bytes/1e2)/10+' KB';  
+    else if (size_bytes>a) {
+      return Math.floor(size_bytes/(a/10))/10+' KB';  
     }
     else {
       return size_bytes+' bytes';

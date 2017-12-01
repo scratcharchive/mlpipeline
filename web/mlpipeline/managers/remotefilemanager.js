@@ -149,13 +149,13 @@ function RemoteFileManager() {
 				else if (A.status=='running') {
 					var elapsed=Math.floor(((new Date())-timer0)/1000);
 					console.log ('Downloading file from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
-					set_prv_server_status(prv,'downloading','Downloading '+(prv.original_size/(1024*1024))+' MB from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
+					set_prv_server_status(prv,'downloading','Downloading '+format_file_size(prv.original_size)+' MB from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
 					setTimeout(do_probe,3000);
 					return;
 				}
 				else if (A.status=='finished') {
 					var elapsed=Math.floor(((new Date())-timer0)/1000);
-					console.log ('Downloaded '+(prv.original_size/(1024*1024))+' MB from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
+					console.log ('Downloaded '+format_file_size(prv.original_size)+' MB from rawbucket to processing server. Elapsed: '+elapsed+' sec.');
 					set_prv_server_status(prv,'unknown',''); //this will trigger a check.
 				}
 				else {
@@ -268,5 +268,32 @@ function RBDownloadManager(O) {
 		else {
 			A.status='running';
 		}
+	}
+}
+
+function format_file_size(size_bytes) {
+	var a=1024;
+	var aa=a*a;
+	var aaa=a*a*a;
+	if (size_bytes>aaa) {
+	  return Math.floor(size_bytes/aaa)+' GB';
+	}
+	else if (size_bytes>aaa) {
+	  return Math.floor(size_bytes/(aaa/10))/10+' GB';  
+	}
+	else if (size_bytes>aa) {
+	  return Math.floor(size_bytes/aa)+' MB';
+	}
+	else if (size_bytes>aa) {
+	  return Math.floor(size_bytes/(aa/10))/10+' MB';  
+	}
+	else if (size_bytes>10*a) {
+	  return Math.floor(size_bytes/a)+' KB';
+	}
+	else if (size_bytes>a) {
+	  return Math.floor(size_bytes/(a/10))/10+' KB';  
+	}
+	else {
+	  return size_bytes+' bytes';
 	}
 }
