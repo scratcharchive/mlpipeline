@@ -2,6 +2,7 @@
 
 function print_usage() {
 	console.log ('mlp [pipeline_document.mlp] --pipeline=[name of subpipeline]');
+	console.log ('Use the MLP_PATH environment variable to specify search paths for finding pipelines.');
 	return;
 }
 
@@ -29,7 +30,16 @@ if ('_params' in CLP.namedParameters) {
 	}
 }
 
-var txt=require('fs').readFileSync(arg1,'utf-8');
+var mlp_path=find_mlp_file(arg1);
+if (!mlp_path) {
+	console.error('Not found: '+arg1);
+	console.error('You may want to use the MLP_PATH environment variable.');
+	return;
+}
+
+console.log ('Using pipeline: '+mlp_path);
+
+var txt=require('fs').readFileSync(mlp_path,'utf-8');
 var obj=JSON.parse(txt);
 
 var doc=new MLPDocument();
@@ -219,6 +229,23 @@ function copy_is_needed(src,dst) {
 	return true;
 }
 
+function find_mlp_file(fname) {
+	if (require('fs').existsSync(fname)) {
+		return fname;
+	}
+	if (fname.slice(0,1)=='/') return '';
+	var str=process.env.MLP_PATH;
+	if (!str) return '';
+	var list=str.split(':');
+	for (var i in list) {
+		var path0=list[i];
+		if (require('fs').existsSync(path0+'/'+fname)) {
+			return path0+'/'+fname;
+		}
+	}
+	return fname;
+}
+
 function foreach_async(list,func,callback) {
   var index=0;
   do_next();
@@ -286,3 +313,4 @@ function CLParams(argv) {
 		}
 	}
 };
+
