@@ -302,7 +302,7 @@ function PrvListWidget(O,prv_list_manager) {
         var elmt1=$('<a href=#></a>');
         elmt.attr('title',"Click to download from rawbucket to processing server.");
         elmt1.click(function() {
-          O.emit('download-rb-file-to-processing-server',{sha1:prv.original_checksum});
+          O.emit('download-rb-file-to-processing-server',{prv:prv});
         });
         elmt1.append(elmt);
         elmt=elmt1;

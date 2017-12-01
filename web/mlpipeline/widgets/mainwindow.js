@@ -86,7 +86,7 @@ function MainWindow(O,options) {
     m_input_file_widget.setRemoteFileManager(m_remote_file_manager);
     JSQ.connect(m_input_file_widget,'open_banjoview',O,function(sender,args) {open_banjoview(args.prvrec);});
     JSQ.connect(m_input_file_widget,'view_text_file',O,function(sender,args) {view_text_file(args.name,args.prvrec);});
-    JSQ.connect(m_input_file_widget,'download-rb-file-to-processing-server',O,function(sender,args) {download_rb_file_to_processing_server(args.sha1);});
+    JSQ.connect(m_input_file_widget,'download-rb-file-to-processing-server',O,function(sender,args) {download_rb_file_to_processing_server(args.prv);});
 
     var output_file_manager=m_document.outputFileManager();
     var m_output_file_widget=new PrvListWidget(0,output_file_manager);
@@ -95,7 +95,7 @@ function MainWindow(O,options) {
     m_output_file_widget.setRemoteFileManager(m_remote_file_manager);
     JSQ.connect(m_output_file_widget,'open_banjoview',O,function(sender,args) {open_banjoview(args.prvrec);});
     JSQ.connect(m_output_file_widget,'view_text_file',O,function(sender,args) {view_text_file(args.name,args.prvrec);});
-    JSQ.connect(m_output_file_widget,'download-rb-file-to-processing-server',O,function(sender,args) {download_rb_file_to_processing_server(args.sha1);});
+    JSQ.connect(m_output_file_widget,'download-rb-file-to-processing-server',O,function(sender,args) {download_rb_file_to_processing_server(args.prv);});
 
     JSQ.connect(m_edit_pipeline_widget,'start_job',O,function(sender,args) {start_job(args.step,m_pipeline_list_widget.currentPipeline().name());});;
     JSQ.connect(m_edit_pipeline_widget,'stop_job',O,function(sender,args) {stop_job(args.job);});;
@@ -834,8 +834,8 @@ function MainWindow(O,options) {
 		});
 	}
 
-	function download_rb_file_to_processing_server(sha1) {
-		m_remote_file_manager.startDownloadFromRBToServer({original_checksum:sha1});
+	function download_rb_file_to_processing_server(prv) {
+		m_remote_file_manager.startDownloadFromRBToServer(prv);
 	}
 
 	function start_job(step,parent_pipeline_name) {
