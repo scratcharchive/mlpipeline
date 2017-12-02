@@ -50,7 +50,7 @@ opts.SCRIPTS.push(
 	'mainwindow.js','mainmenu.js','statusbar.js','viewlistwidget.js',
 	'googledrive.js','greetingwindow.js','editstepdialog.js','mlpipelinelistwidget.js',
 	'importpipelinesdialog.js','textfilewindow.js','chooselogindlg.js',
-	'recentfilewidget.js'
+	'recentfilewidget.js','mlplogwidget.js'
 );
 
 opts.SOURCEPATH.push('managers')

@@ -325,7 +325,7 @@ function PrvListWidget(O,prv_list_manager) {
       elmt=$('<span class=unknown title="Error checking rawbucket: '+status0.message+'">---</span>');  
     }
     else {
-      elmt=$('<span class=unknown> title="RB status: '+status0.status+'">--</span>');    
+      elmt=$('<span class=unknown title="RB status: '+status0.status+'">--</span>');    
     }
     return elmt;
   }

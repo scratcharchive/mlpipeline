@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var using_nodejs=false;
 if (typeof module !== 'undefined' && module.exports) {
+	using_nodejs=true;
 
 	JSQObject=require(__dirname+'/jsq/src/jsqcore/jsqobject.js').JSQObject;
 	jsu=require(__dirname+'/jsutils/jsutils.js').jsu;
@@ -450,23 +452,23 @@ function Job(O) {
 			}
 		}
 		outputs_to_return.console_out=true;
-		console.log ('----------------------------------------------------------------------------');
-		console.log ('Queueing job: '+m_processor_name);
+		plog('----------------------------------------------------------------------------');
+		plog('Queueing job: '+m_processor_name);
 		{
 			var inputs_str='INPUTS: ';
 			for (var iname in inputs) {
 				inputs_str+=iname+'='+inputs[iname]+'  ';
 			}
-			console.log ('  '+inputs_str);
+			plog('  '+inputs_str);
 		}
 		{
 			var params_str='PARAMS: ';
 			for (var pname in m_parameters) {
 				params_str+=pname+'='+m_parameters[pname]+'  ';
 			}
-			console.log ('  '+params_str);
+			plog('  '+params_str);
 		}
-		console.log ('----------------------------------------------------------------------------');
+		plog('----------------------------------------------------------------------------');
 		KC.queueJob(m_processor_name,inputs,outputs_to_return,m_parameters,{},function(resp) {
 			if (!resp.success) {
 				report_error(resp.error);
@@ -475,6 +477,17 @@ function Job(O) {
 			m_process_id=resp.process_id;
 			handle_process_probe_response(resp);
 		});
+	}
+	function plog(str,aa) {
+		if (using_nodejs) {
+			console.log(str);
+		}
+		else {
+			console.log(str); //not sure if we should do this
+			if (!aa) aa={};
+			aa.text=str;
+			mlpLog(aa);
+		}
 	}
 	function handle_process_probe_response(resp) {
 		if (!resp.success) {
@@ -491,7 +504,7 @@ function Job(O) {
 				if (lines[i].trim()) {
 					var str0='  |'+m_processor_name+'| ';
 					while (str0.length<35) str0+=' ';
-					console.log (str0+lines[i]);
+					plog(str0+lines[i],{side:'server'});
 				}
 			}
 		}

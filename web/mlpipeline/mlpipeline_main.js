@@ -53,7 +53,7 @@ function jsqmain(query) {
         X.setDocStorClient(DSC);
         X.showFullBrowser();
         X.setLoadingMessage('Starting ML Pipeline...');
-        X.login({use_last_successful:true},function() {
+        X.login({use_last_successful:(query.last_login=='true')},function() {
             window.onbeforeunload = function (e) {
                 if (!X.changesHaveBeenSaved()) {
                     var message = "Are you sure you want leave this page without saving changes?";

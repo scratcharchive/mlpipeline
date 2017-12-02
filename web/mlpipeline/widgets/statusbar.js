@@ -87,6 +87,7 @@ function StatusBar(O) {
 
 	var m_action_code=0;
 	function setLastAction(action,timeout_msec) {
+		mlpLog({text:action});
 		m_action_code++;
 		var m_local_action_code=m_action_code;
 		O.div().find('#last_action').html(action);

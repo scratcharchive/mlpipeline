@@ -100,6 +100,8 @@ function MainWindow(O,options) {
     JSQ.connect(m_edit_pipeline_widget,'start_job',O,function(sender,args) {start_job(args.step,m_pipeline_list_widget.currentPipeline().name());});;
     JSQ.connect(m_edit_pipeline_widget,'stop_job',O,function(sender,args) {stop_job(args.job);});;
 
+    var m_log_widget=new MLPLogWidget();
+
     // Create the main pipeline
     var main_pipeline=new MLPipeline();
     main_pipeline.setName('main');
@@ -129,6 +131,7 @@ function MainWindow(O,options) {
     m_output_file_widget.setParent(O);
     m_status_bar.setParent(O);
     m_main_menu.setParent(O);
+    m_log_widget.setParent(O);
 
 
     JSQ.connect(m_status_bar,'set_processing_server',O,function() {select_processing_server();});
@@ -161,19 +164,21 @@ function MainWindow(O,options) {
 		var W=O.width();
 		var H=O.height();
 
-		var W1=350;
+		var W1=Math.max(350,Math.floor(W/5));
 		var W2=Math.min(500,Math.max(100,W/4));
 		var Hmenu=45;
 		var Hstatus=20;
+		var Hlog=Math.max(100,Math.floor((H-Hmenu-Hstatus)/5));
 
 		m_main_menu.setGeometry(0,0,W-0*2,Hmenu);
 		//m_tab_widget.setGeometry(0,Hmenu,W,H-Hstatus-Hmenu-0);
-		m_edit_pipeline_widget.setGeometry(0+W1,Hmenu,W-W1-W2,H-Hstatus-Hmenu);
-		m_pipeline_list_widget.setGeometry(0,Hmenu,W1,H-Hstatus-Hmenu);
+		m_edit_pipeline_widget.setGeometry(0+W1,Hmenu,W-W1-W2,H-Hstatus-Hmenu-Hlog);
+		m_pipeline_list_widget.setGeometry(0,Hmenu,W1,H-Hstatus-Hmenu-Hlog);
 		var Ha=(H-Hstatus-Hmenu)/2;
-		m_input_file_widget.setGeometry(W-W2,Hmenu,W2,Ha);
-		m_output_file_widget.setGeometry(W-W2,Hmenu+Ha,W2,Ha);
-		m_status_bar.setGeometry(0,H-Hstatus,W,Hstatus);
+		m_input_file_widget.setGeometry(W-W2,Hmenu,W2,Ha-Hlog);
+		m_output_file_widget.setGeometry(W-W2,Hmenu+Ha,W2,Ha-Hlog);
+		m_log_widget.setGeometry(0,H-Hlog+5,W,Hlog-10);
+		m_status_bar.setGeometry(0,H-Hstatus-Hlog,W,Hstatus);
 
 		m_loading_message.setGeometry(0,0,W,H);
 	}
@@ -210,6 +215,7 @@ function MainWindow(O,options) {
 		on_current_pipeline_changed();
 		//m_kulele_client.setSubserverName(m_document.processingServerName());
 		m_last_saved_document_object=m_document.toObject();
+		mlpLog({text:'Loaded document: '+format_file_size(JSON.stringify(obj).length)});
 	}
 
 	function load_from_file() {
@@ -885,6 +891,9 @@ function MainWindow(O,options) {
 				prompt_login(callback);
 			});
 		}
+		else {
+			prompt_login(callback);
+		}
 	}
 
 	function prompt_login(callback) {
@@ -1020,4 +1029,31 @@ function try_parse_json(str) {
 	catch(err) {
 		return null;
 	}
+}
+
+function format_file_size(size_bytes) {
+    var a=1024;
+    var aa=a*a;
+    var aaa=a*a*a;
+    if (size_bytes>aaa) {
+      return Math.floor(size_bytes/aaa)+' GB';
+    }
+    else if (size_bytes>aaa) {
+      return Math.floor(size_bytes/(aaa/10))/10+' GB';  
+    }
+    else if (size_bytes>aa) {
+      return Math.floor(size_bytes/aa)+' MB';
+    }
+    else if (size_bytes>aa) {
+      return Math.floor(size_bytes/(aa/10))/10+' MB';  
+    }
+    else if (size_bytes>10*a) {
+      return Math.floor(size_bytes/a)+' KB';
+    }
+    else if (size_bytes>a) {
+      return Math.floor(size_bytes/(a/10))/10+' KB';  
+    }
+    else {
+      return size_bytes+' bytes';
+    }
 }

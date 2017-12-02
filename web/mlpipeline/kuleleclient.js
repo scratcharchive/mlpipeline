@@ -26,6 +26,7 @@ if (typeof module !== 'undefined' && module.exports) {
 	LocalStorage=require('./jsutils/localstorage.js').LocalStorage;
 	sha1=require('./jsutils/3rdparty/sha1.js');
 	btoa=function(str) {return new Buffer(str).toString('base64');};
+	mlpLog=function() {}; //so that we don't get an exception
 }
 
 function KuleleClient(O) {
@@ -238,6 +239,8 @@ function KuleleClient(O) {
 	}
 
 	function queueJob(processor_name,inputs,outputs_to_return,params,opts_in,callback) {
+		var logtxt='Queuing processor job: '+processor_name+' '+JSON.stringify(params);
+		mlpLog({text:logtxt});
 		var spec=m_processor_manager.processorSpec(processor_name);
 		if (!spec) {
 			callback({success:false,error:'Processor is not registered: '+processor_name});
