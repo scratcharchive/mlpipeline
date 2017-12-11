@@ -102,11 +102,11 @@ function MainWindow(O,options) {
 
     var m_log_widget=new MLPLogWidget();
 
-    // Create the main pipeline
-    var main_pipeline=new MLPipeline();
-    main_pipeline.setName('main');
-    pipeline_list_manager.addPipeline(main_pipeline);
-    m_pipeline_list_widget.setCurrentPipeline(main_pipeline);
+    // Create the test pipeline
+    var test_pipeline=new MLPipeline();
+    test_pipeline.setName('test');
+    pipeline_list_manager.addPipeline(test_pipeline);
+    m_pipeline_list_widget.setCurrentPipeline(test_pipeline);
     JSQ.connect(m_pipeline_list_widget,'current_pipeline_changed',O,on_current_pipeline_changed);
 
     JSQ.connect(m_pipeline_list_widget,'current_pipeline_changed',O,update_output_files);

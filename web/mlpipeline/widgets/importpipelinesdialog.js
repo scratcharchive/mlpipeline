@@ -157,7 +157,7 @@ function ImportPipelinesDialog(O) {
 					console.log(m_all_pipelines);
 					for (var i in m_all_pipelines) {
 						var pipeline_name=m_all_pipelines[i].name||((m_all_pipelines[i].spec||{}).name);
-						if (pipeline_name!='main') {
+						if ((pipeline_name!='test')&&(pipeline_name!='main')) {
 							console.log('appending option: '+pipeline_name);
 							m_select.append('<option value="'+i+'">'+pipeline_name+'</option>');
 						}
@@ -175,7 +175,7 @@ function ImportPipelinesDialog(O) {
 				m_all_pipelines=tmp.object.pipelines||[];
 				for (var i in m_all_pipelines) {
 					var pipeline_name=m_all_pipelines[i].name||((m_all_pipelines[i].spec||{}).name);
-					if (pipeline_name!='main') {
+					if ((pipeline_name!='test')&&(pipeline_name!='main')) {
 						console.log('appending option: '+pipeline_name);
 						m_select.append('<option value="'+i+'">'+pipeline_name+'</option>');
 					}

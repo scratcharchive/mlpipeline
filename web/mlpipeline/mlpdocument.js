@@ -69,11 +69,11 @@ function MLPDocument(O) {
 		}
 		obj.jobs=[];
 		if (m_job_manager) {
-			var main_pipeline=m_pipeline_list_manager.findPipeline('main');
-			if (main_pipeline) {
-				for (var i=0; i<main_pipeline.stepCount(); i++) {
-					var step0=main_pipeline.step(i);
-					var job0=m_job_manager.findLastJobForStep(main_pipeline.name(),step0);
+			var test_pipeline=m_pipeline_list_manager.findPipeline('test')||m_pipeline_list_manager.findPipeline('main');
+			if (test_pipeline) {
+				for (var i=0; i<test_pipeline.stepCount(); i++) {
+					var step0=test_pipeline.step(i);
+					var job0=m_job_manager.findLastJobForStep(test_pipeline.name(),step0);
 					if ((job0)&&(job0.status()=='finished')) {
 						obj.jobs.push(job0.toObject());
 					}
@@ -86,6 +86,18 @@ function MLPDocument(O) {
 		var pipelines=obj.pipelines||[];
 		m_pipeline_list_manager.clearPipelines();
 		if (pipelines.length>0) {
+			var pipeline_objects_by_name={};
+			for (var i=0; i<pipelines.length; i++) {
+				var spec0=pipelines[i].spec||{};
+				var name0=spec0.name;
+				if (name0) {
+					pipeline_objects_by_name[name0]=pipelines[i];
+				}
+			}
+			if (('main' in pipeline_objects_by_name)&&(!('test' in pipeline_objects_by_name))) {
+				console.log ('Note: renaming subpipeline called "main" to "test".');
+				pipeline_objects_by_name['main'].spec.name='test';
+			}
 			for (var i=0; i<pipelines.length; i++) {
 				var P;
 				if (pipelines[i].script) {
@@ -100,7 +112,7 @@ function MLPDocument(O) {
 		}
 		else {
 			var P=new MLPipeline();
-			P.setObject({spec:{name:'main'}});
+			P.setObject({spec:{name:'test'}});
 			m_pipeline_list_manager.addPipeline(P);
 		}
 		var input_files=obj.input_files||[];
