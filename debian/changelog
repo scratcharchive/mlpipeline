@@ -1,3 +1,9 @@
+mlpipeline (0.11.5-beta5) xenial; urgency=medium
+
+  * Log widget, better console output, and improved colors
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Sat, 02 Dec 2017 06:52:54 -0500
+
 mlpipeline (0.11.5-beta4) xenial; urgency=medium
 
   * Various improvements and fixes including ability to download from rawbucket to processing server
