@@ -328,9 +328,14 @@ function CLParams(argv) {
 				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
 			}
 			else {
-				//this.namedParameters[arg0]=args[i+1]||'';
-				//i++;
-				this.namedParameters[arg0]='';
+				var next0=args[i+1]||'';
+				if ((next0)&&(!starts_with(next0,'--'))) {
+					this.namedParameters[arg0]=next0;	
+					i++;
+				}
+				else {
+					this.namedParameters[arg0]='';
+				}
 			}
 		}
 		else if (arg0.indexOf('-')===0) {
@@ -341,5 +346,7 @@ function CLParams(argv) {
 			this.unnamedParameters.push(arg0);
 		}
 	}
+	function starts_with(str,str2) {
+		return (str.slice(0,str2.length)==str2);
+	}
 };
-
