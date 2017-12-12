@@ -4,3 +4,4 @@ utils/mlcp/ /usr/share/mlpipeline/utils/
 processing_server/ /usr/share/mlpipeline/
 bin/mlp-larinet /usr/bin/
 bin/mlp-run /usr/bin/
+bin/mlp-spec /usr/bin/

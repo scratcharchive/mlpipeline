@@ -95,7 +95,7 @@ function MLPDocument(O) {
 				}
 			}
 			if (('main' in pipeline_objects_by_name)&&(!('test' in pipeline_objects_by_name))) {
-				console.log ('Note: renaming subpipeline called "main" to "test".');
+				//console.log ('Note: renaming subpipeline called "main" to "test".');
 				pipeline_objects_by_name['main'].spec.name='test';
 			}
 			for (var i=0; i<pipelines.length; i++) {

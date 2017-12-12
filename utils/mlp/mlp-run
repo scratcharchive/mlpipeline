@@ -1,7 +1,8 @@
 #!/usr/bin/env nodejs
 
 function print_usage() {
-	console.log ('mlp [pipeline_document.mlp] --pipeline=[name of subpipeline]');
+	console.log ('mlp-run [pipeline_document.mlp] [name of exported subpipeline] --[key1]=[val1] --[key2]=[val2] ...');
+	console.log ('mlp-spec [pipeline_document.mlp] [name of exported subpipeline]');
 	console.log ('Use the MLP_PATH environment variable to specify search paths for finding pipelines.');
 	return;
 }
@@ -19,6 +20,11 @@ var arg1=CLP.unnamedParameters[0]||'';
 if (!arg1) {
 	//arg1='/home/magland/Downloads/synth.mlp'
 	print_usage();
+	return;
+}
+
+if (arg1=='spec') {
+	print_spec();
 	return;
 }
 
@@ -83,6 +89,29 @@ kulele_client.login({passcode:'testuser'},function(tmp) {
 		}
 	});
 //});
+
+function print_spec() {
+	
+	var mlp_path=find_mlp_file(CLP.unnamedParameters[1]||'');
+	if (!mlp_path) {
+		console.log ('Unable to find pipeline document: '+(CLP.unnamedParameters[1]||''));
+		return;
+	}
+	var pipeline_name=CLP.unnamedParameters[2]||'';
+	if (!pipeline_name) {
+		print_usage();
+		return;
+	}
+	var txt=require('fs').readFileSync(mlp_path,'utf-8');
+	var obj=JSON.parse(txt);
+
+	var doc=new MLPDocument();
+	doc.fromObject(obj);
+	var PLM=doc.pipelineListManager();
+	var subpipeline=PLM.findPipeline(pipeline_name);
+	var spec0=subpipeline.spec();
+	console.log (JSON.stringify(spec0,null,4));
+}
 
 
 function step2() {
