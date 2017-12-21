@@ -408,7 +408,7 @@ function handle_run_batch_script(mls_fname,batch_script_name_or_file,output_dire
 	var X=STUDY.batchScript(batch_script_name_or_file);
 	if (!X) {
 		if (!require('fs').existsSync(batch_script_name_or_file)) {
-			console.error('Unable to find batch script or file: '+batch_script_name);
+			console.error('Unable to find batch script or file: '+batch_script_name_or_file);
 			return;	
 		}
 		var script=require('fs').readFileSync(batch_script_name_or_file,'utf8');
@@ -534,7 +534,7 @@ function clean_up_temporary_files() {
 	for (var i in s_temporary_files) {
 		var fname=s_temporary_files[i];
 		if (require('fs').existsSync(fname)) {
-			console.log ('Removing temporary file: '+fname);
+			//console.log ('Removing temporary file: '+fname);
 			require('fs').unlinkSync(fname);
 		}
 	}
@@ -743,7 +743,7 @@ function MLSDataset(obj) {
 			else {
 				if (ends_with(path0,'.prv')) {
 					console.log ('Parsing file: '+folder_path+'/'+path0);
-					var json=require('fs').readFileSync(path0,'utf8');
+					var json=require('fs').readFileSync(folder_path+'/'+path0,'utf8');
 					var prv0=try_parse_json(json);
 					if (!prv0) {
 						console.error('Error parsing json in file: '+folder_path+'/'+path0);

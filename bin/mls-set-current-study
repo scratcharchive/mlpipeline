@@ -36,7 +36,7 @@ import-batch-script export-batch-script list-batch-scripts edit-batch-script run
   local cur prev
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
-  COMPREPLY=( $(compgen -W "${_script_commands}" -- ${cur}) )
+  COMPREPLY=( $(compgen -W "${_script_commands}" -A file -- ${cur}) )
 
   return 0
 }
