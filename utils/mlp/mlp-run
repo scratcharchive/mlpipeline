@@ -190,17 +190,24 @@ function step2() {
 	}
 	for (var iname in inputs0) {
 		var path0=CLP.namedParameters[iname];
-		console.log ('Computing checksum for file: '+path0);
-		var stat=prv_stat_sync(path0);
-		if (!stat) {
-			console.error('Error computing checksum for file: '+path0);
-			return;
+		var prv;
+		if (ends_with(path0,'.prv')) {
+			var json0=require('fs').readFileSync(path0);
+			prv=try_parse_json(json0);
 		}
-		var prv={
-			original_path:require('path').resolve(process.cwd(),path0),
-			original_checksum:stat.checksum,
-			original_fcs:stat.fcs,
-			original_size:stat.size
+		else {
+			console.log ('Computing checksum for file: '+path0);
+			var stat=prv_stat_sync(path0);
+			if (!stat) {
+				console.error('Error computing checksum for file: '+path0);
+				return;
+			}
+			prv={
+				original_path:require('path').resolve(process.cwd(),path0),
+				original_checksum:stat.checksum,
+				original_fcs:stat.fcs,
+				original_size:stat.size
+			}
 		}
 		input_file_manager.setPrv(iname,prv);
 	}
@@ -231,17 +238,28 @@ function step2() {
 			for (var okey in output_files) {
 				if (okey in CLP.namedParameters) {
 					var prv=output_files[okey].prv;
-					if (!copy_is_needed(prv.original_path,CLP.namedParameters[okey])) {
-						console.log ('No change in output file: '+CLP.namedParameters[okey]);
+					var output_fname=CLP.namedParameters[okey];
+					if (ends_with(output_fname,'.prv')) {
+						console.log ('Writing output prv for '+okey+' to '+CLP.namedParameters[okey]);
+						require('fs').writeFileSync(output_fname,JSON.stringify(prv,null,4),'utf-8');
 					}
 					else {
-						console.log ('Copying output '+okey+' to '+CLP.namedParameters[okey]);
-						copy_file_sync(prv.original_path,CLP.namedParameters[okey]);
+						if (!copy_is_needed(prv.original_path,output_fname)) {
+							console.log ('No change in output file: '+CLP.namedParameters[okey]);
+						}
+						else {
+							console.log ('Copying output '+okey+' to '+CLP.namedParameters[okey]);
+							copy_file_sync(prv.original_path,output_fname);
+						}
 					}
 				}
 			}
 		}); 
 	}
+}
+
+function ends_with(str,str2) {
+	return (str.slice(str.length-str2.length)==str2);
 }
 
 function copy_is_needed(src,dst) {

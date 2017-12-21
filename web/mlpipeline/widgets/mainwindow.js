@@ -29,7 +29,6 @@ function MainWindow(O,options) {
 	this.setDocumentName=function(name) {setDocumentName(name);};
 	this.setDocumentOwner=function(owner) {setDocumentOwner(owner);};
 	this.documentName=function() {return m_document.documentName();}; 
-	this.changesHaveBeenSaved=function() {return changesHaveBeenSaved();};
 	this.setProcessingServerName=function(name) {m_document.setProcessingServerName(name);};
 	this.loadFromProcessingServer=function(userid,filename,promptsave,callback) {load_from_processing_server(userid,filename,promptsave,callback);};
 	this.loadFromDocStor=function(opts,callback) {load_from_docstor(opts,callback);};
@@ -41,6 +40,8 @@ function MainWindow(O,options) {
 	this.registerViewPlugin=function(VP) {m_input_file_widget.registerViewPlugin(VP); m_output_file_widget.registerViewPlugin(VP);};
 	this.setDocStorClient=function(DSC) {m_docstor_client=DSC;};
 	this.docStorClient=function() {return m_docstor_client;};
+	this.changesHaveBeenSaved=function() {return changesHaveBeenSaved();};
+	this.setUnmodified=function() {setUnmodified();};
 
 	var m_processing_server_document_info={};
 
@@ -145,7 +146,7 @@ function MainWindow(O,options) {
     JSQ.connect(m_main_menu,'new_document',O,function() {new_document();});
     JSQ.connect(m_main_menu,'save_to_browser_storage',O,function() {save_to_browser_storage();});
     JSQ.connect(m_main_menu,'load_from_browser_storage',O,function() {load_from_browser_storage(null,null,function(tmp) {if (!tmp.success) alert(tmp.error);});});
-    JSQ.connect(m_main_menu,'save_to_file',O,function() {save_to_file();});
+    JSQ.connect(m_main_menu,'save_to_file',O,function(sender,args) {save_to_file(args);});
     JSQ.connect(m_main_menu,'load_from_file',O,function() {load_from_file();});
     JSQ.connect(m_main_menu,'save_to_processing_server',O,function() {save_to_processing_server();});
     JSQ.connect(m_main_menu,'load_from_processing_server',O,function() {load_from_processing_server();});
@@ -241,13 +242,14 @@ function MainWindow(O,options) {
 		});
 	}
 
-	function save_to_file() {
+	function save_to_file(args) {
 		if (!check_ok_to_save()) return;
 
 		var default_doc_name=remove_mlp_suffix(m_document.documentName()||'default')+'.mlp';
 		var obj=get_document_object();
 		if (m_kulele_client.localMode()) {
-			download(JSON.stringify(obj),default_doc_name);
+			var path=(args||{}).path||'';
+			download(JSON.stringify(obj),'',path);
 		}
 		else {
 			var doc_name=prompt('Name of JSON document:',default_doc_name);
@@ -718,6 +720,10 @@ function MainWindow(O,options) {
 	function changesHaveBeenSaved() {
 		if (m_edit_pipeline_widget.editorIsDirty()) return false;
 		return (JSON.stringify(m_last_saved_document_object)==JSON.stringify(m_document.toObject()));
+	}
+
+	function setUnmodified() {
+		m_last_saved_document_object=JSQ.clone(m_document.toObject());
 	}
 
 	function load_from_google_drive() {

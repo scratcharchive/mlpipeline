@@ -111,6 +111,10 @@ int main(int argc, char *argv[]) {
     if (arg1.endsWith(".mlp")) {
         mlp_path=arg1;
     }
+    QString js_path;
+    if (arg1.endsWith(".js")) {
+        js_path=arg1;
+    }
 #if QT_VERSION >= 0x050600
     QWebEngineView *W=new QWebEngineView;
 #else
@@ -152,7 +156,14 @@ int main(int argc, char *argv[]) {
     if (!mlp_path.isEmpty()) {
         QString str=read_text_file(mlp_path);
         frame->evaluateJavaScript(QString("window.mlp_file_content=atob('%1');").arg((QString)str.toUtf8().toBase64()));
+        frame->evaluateJavaScript(QString("window.mlp_file_path='%1';").arg(mlp_path));
         frame->evaluateJavaScript(QString("window.mlp_file_name='%1';").arg(QFileInfo(mlp_path).fileName()));
+    }
+    else if (!js_path.isEmpty()) {
+        QString str=read_text_file(js_path);
+        frame->evaluateJavaScript(QString("window.js_file_content=atob('%1');").arg((QString)str.toUtf8().toBase64()));
+        frame->evaluateJavaScript(QString("window.js_file_path='%1';").arg(js_path));
+        frame->evaluateJavaScript(QString("window.js_file_name='%1';").arg(QFileInfo(js_path).fileName()));
     }
     else {
         frame->evaluateJavaScript(QString("window.mlp_load_default_browser_storage=true;"));
@@ -180,7 +191,9 @@ int main(int argc, char *argv[]) {
 #endif
     W->setFocusPolicy(Qt::StrongFocus);
 
-    main_window.showMaximized();
+    main_window.setMinimumWidth(1200);
+    main_window.setMinimumHeight(800);
+    main_window.show();
 
     return a.exec();
 }

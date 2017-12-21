@@ -1,0 +1,943 @@
+#!/usr/bin/env nodejs
+
+function print_usage() {
+	console.log ('Usage:');
+	console.log ('mls create-study [study.mls]');
+	console.log ('mls set-current-study [study.mls]');
+	console.log ('mls summarize-study [study.mls (opt)]');
+
+	console.log ('mls import-dataset [study.mls (opt)] [dataset_folder] [dataset_id (opt)]');
+	console.log ('mls list-datasets [study.mls (opt)]');
+	console.log ('mls show-dataset [study.mls (opt)] [dataset_id]');
+	console.log ('mls summarize-dataset [study.mls (opt)] [dataset_id]');
+	console.log ('mls export-dataset [study.mls (opt)] [dataset_id] [output_folder (opt)]');
+
+	console.log ('mls import-pipeline [study.mls (opt)] [file.mlp] [pipeline_name (opt)]');
+	console.log ('mls export-pipeline [study.mls (opt)] [pipeline_name] [file.mlp (opt)]');
+	console.log ('mls list-pipelines [study.mls (opt)]');
+	console.log ('mls edit-pipeline [study.mls (opt)] [pipeline_name]');
+
+	console.log ('mls import-batch-script [study.mls (opt)] [file.js] [batch_script_name (opt)]');
+	console.log ('mls export-batch-script [study.mls (opt)] [batch_script_name] [file.mlp (opt)]');
+	console.log ('mls list-batch-scripts [study.mls (opt)]');
+	console.log ('mls edit-batch-script [study.mls (opt)] [batch_script_name]');
+	console.log ('mls run-batch-script [study.mls (opt)] [batch_script_name or file] [output_directory]');
+
+	return;
+}
+
+var s_temporary_files=[];
+process.on('SIGINT', function() {
+	clean_up_temporary_files();
+	process.exit();
+});
+
+var CLP=new CLParams(process.argv);
+var arg1=CLP.unnamedParameters[0]||'';
+if (!arg1) {
+	print_usage();
+	return;
+}
+
+var mls_fname='';
+var other_args=[];
+for (var i=1; i<CLP.unnamedParameters.length; i++) {
+	if (ends_with(CLP.unnamedParameters[i],'.mls'))
+		mls_fname=CLP.unnamedParameters[i];
+	else
+		other_args.push(CLP.unnamedParameters[i]);
+}
+mls_fname=mls_fname||process.env.MLS_CURRENT_STUDY;
+
+if (arg1=='create-study') {
+	if (!mls_fname) {
+		print_usage();
+		return;
+	}
+	handle_create(mls_fname);
+	return;
+}
+else if (arg1=='set-current-study') {
+	if (!mls_fname) {
+		print_usage();
+		return;
+	}
+
+	handle_set_current_study(mls_fname);
+	return;	
+}
+else if (arg1=='summarize-study') {
+	handle_summarize(mls_fname,CLP.namedParameters);
+	return;
+}
+else if (arg1=='import-dataset') {
+	var folder_path=other_args[0]||'';
+	if (!folder_path) {
+		print_usage();
+		return;
+	}
+	var dataset_id=other_args[1]||file_part(folder_path);
+	handle_import_dataset(mls_fname,folder_path,dataset_id);
+}
+else if (arg1=='list-datasets') {
+	handle_list_datasets(mls_fname);
+}
+else if (arg1=='show-dataset') {
+	var dataset_id=other_args[0]||'';
+	if (!dataset_id) {
+		print_usage();
+		return;
+	}
+	handle_show_dataset(mls_fname,dataset_id);
+}
+else if (arg1=='summarize-dataset') {
+	var dataset_id=other_args[0]||'';
+	if (!dataset_id) {
+		print_usage();
+		return;
+	}
+	handle_summarize_dataset(mls_fname,dataset_id);
+}
+else if (arg1=='export-dataset') {
+	var dataset_id=other_args[0]||'';
+	var folder_path=other_args[1]||dataset_id;
+	if (!folder_path) {
+		print_usage();
+		return;
+	}
+	handle_export_dataset(mls_fname,dataset_id,folder_path);
+}
+else if (arg1=='import-pipeline') {
+	var pipeline_path=other_args[0]||'';
+	if (!pipeline_path) {
+		print_usage();
+		return;
+	}
+	var file_name=file_part(pipeline_path);
+	if (!ends_with(file_name,'.mlp')) {
+		console.error('Pipeline file name must have .mlp extension.');
+		return;
+	}
+	var pipeline_name=other_args[1]||(file_name.slice(0,file_name.length-('.mlp').length));
+	handle_import_pipeline(mls_fname,pipeline_path,pipeline_name);
+}
+else if (arg1=='list-pipelines') {
+	handle_list_pipelines(mls_fname);
+}
+else if (arg1=='edit-pipeline') {
+	var pipeline_name=other_args[0]||'';
+	if (!pipeline_name) {
+		print_usage();
+		return;
+	}
+	handle_edit_pipeline(mls_fname,pipeline_name);
+}
+else if (arg1=='import-batch-script') {
+	var batch_script_path=other_args[0]||'';
+	if (!batch_script_path) {
+		print_usage();
+		return;
+	}
+	var file_name=file_part(batch_script_path);
+	if (!ends_with(file_name,'.js')) {
+		console.error('Batch script file name must have .js extension.');
+		return;
+	}
+	var batch_script_name=other_args[1]||(file_name.slice(0,file_name.length-('.js').length));
+	handle_import_batch_script(mls_fname,batch_script_path,batch_script_name);
+}
+else if (arg1=='list-batch-scripts') {
+	handle_list_batch_scripts(mls_fname);
+}
+else if (arg1=='edit-batch-script') {
+	var batch_script_name=other_args[0]||'';
+	if (!batch_script_name) {
+		print_usage();
+		return;
+	}
+	handle_edit_batch_script(mls_fname,batch_script_name);
+}
+else if (arg1=='run-batch-script') {
+	var batch_script_name_or_file=other_args[0]||'';
+	if (!batch_script_name_or_file) {
+		print_usage();
+		return;
+	}
+	var output_directory=other_args[1]||'';
+	if (!output_directory) {
+		print_usage();
+		return;
+	}
+	handle_run_batch_script(mls_fname,batch_script_name_or_file,output_directory);
+}
+else {
+	console.error('Unrecognized command: '+arg1);
+	return;
+}
+
+function handle_create(fname) {
+	if (!ends_with(fname,'.mls')) fname+='.mls';
+	if (require('fs').existsSync(fname)) {
+		console.error('File already exists: '+fname);
+		return;
+	}
+	var X=new MLStudy();
+	var obj=X.object();
+	require('fs').writeFileSync(fname,JSON.stringify(obj,null,4),'utf8');
+	console.log ('Wrote file: '+fname);
+	handle_set_current_study(fname);
+}
+
+function handle_set_current_study(fname) {
+	if (!ends_with(fname,'.mls')) fname+='.mls';
+	console.log ('To set the current study, use the following command:');
+	console.log ('source mls-set-current-study '+fname);
+}
+
+function handle_summarize(fname,params) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(fname)) return;
+
+	var num_datasets=STUDY.datasetIds().length;
+	var num_pipelines=STUDY.pipelineNames().length;
+	//var num_jobs=STUDY.jobIds().length;
+	var num_batch_scripts=STUDY.batchScriptNames().length;
+	var txt='Study: '+fname+'\n';
+	txt+=num_datasets+' datasets\n';
+	txt+=num_pipelines+' pipelines\n';
+	//txt+=num_jobs+' jobs\n';
+	txt+=num_batch_scripts+' batch scripts';
+	console.log (txt);
+}
+
+function handle_import_dataset(mls_fname,folder_path,dataset_id) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	STUDY.importDataset(dataset_id,folder_path,function() {
+		if (!STUDY.save(mls_fname))
+			return;
+		console.log ('Imported dataset ['+dataset_id+'] from folder ['+folder_path+'] into study ['+mls_fname+']');
+	});
+}
+
+function handle_list_datasets(mls_fname) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var ids=STUDY.datasetIds();
+	for (var i=0; i<ids.length; i++) {
+		console.log (ids[i]);
+	}
+}
+
+function handle_show_dataset(mls_fname,id) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var X=STUDY.dataset(id);
+	if (!X) {
+		console.error('Unable to find dataset with id: '+id);
+		return;
+	}
+
+	var obj=X.object();
+	console.log (JSON.stringify(obj,null,4));
+}
+
+function handle_summarize_dataset(mls_fname,id) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var X=STUDY.dataset(id);
+	if (!X) {
+		console.error('Unable to find dataset with id: '+id);
+		return;
+	}
+
+	var txt='DATASET ('+X.id()+')\n';
+	var file_names=X.fileNames();
+	txt+='FILES:\n';
+	for (var i=0; i<file_names.length; i++) {
+		txt+='    '+file_names[i]+'\n';
+	}
+	txt+='PARAMETERS:\n';
+	var params=X.parameters();
+	for (var key in params) {
+		txt+='    '+key+'='+params[key]+'\n';
+	}
+
+	console.log (txt);
+}
+
+function handle_export_dataset(mls_fname,dataset_id,output_folder) {
+
+	if (require('fs').existsSync(output_folder)) {
+		console.error('File or folder already exists: '+output_folder);
+		return;
+	}
+
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	STUDY.exportDataset(dataset_id,output_folder,function() {
+		console.log ('Exported dataset: ['+dataset_id+'] from study ['+mls_fname+'] into folder ['+output_folder+']');
+	});
+}
+
+function handle_import_pipeline(mls_fname,pipeline_path,pipeline_name) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var json=require('fs').readFileSync(pipeline_path,'utf8');
+	var obj=try_parse_json(json);
+	if (!json) {
+		console.error('Error parsing json of file: '+pipeline_path);
+		return;
+	}
+	var X=new MLSPipeline(obj);
+	STUDY.setPipeline(pipeline_name,X);
+	if (!STUDY.save(mls_fname))
+		return;
+	console.log ('Imported pipeline ['+pipeline_name+'] from ['+pipeline_path+'] into study ['+mls_fname+']');
+}
+
+function handle_list_pipelines(mls_fname) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var names=STUDY.pipelineNames();
+	for (var i=0; i<names.length; i++) {
+		console.log (names[i]);
+	}
+}
+
+function handle_edit_pipeline(mls_fname,pipeline_name) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var X=STUDY.pipeline(pipeline_name);
+	if (!X) {
+		console.error('Unable to find pipeline by name: '+pipeline_name);
+		return;
+	}
+
+	var tmp_fname=get_temporary_file_name_with_extension('mlp');
+
+	var json=JSON.stringify(X.object(),null,4);
+	require('fs').writeFileSync(tmp_fname,json,'utf8');
+
+	console.log ('The mlpipeline editor should now open. After modifying the pipeline, select the "File->Save to file" menu option. Your pipeline will then be saved back to the study.');
+	exec_sync('mlpipeline '+tmp_fname);
+	var json2=require('fs').readFileSync(tmp_fname,'utf8');
+	require('fs').unlinkSync(tmp_fname);
+
+	if (json!=json2) {
+		X.setObject(JSON.parse(json2));
+		console.log ('Updating pipeline: '+pipeline_name);
+		STUDY.setPipeline(pipeline_name,X);
+		STUDY.save(mls_fname);
+		console.log ('Pipeline ['+pipeline_name+'] in study ['+mls_fname+'] has been updated.');
+	}
+	else {
+		console.log ('Pipeline was not changed. Not updating.');
+	}
+}
+
+function handle_import_batch_script(mls_fname,batch_script_path,batch_script_name) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var js=require('fs').readFileSync(batch_script_path,'utf8');
+	if (!js) {
+		console.error('Error reading file: '+batch_script_path);
+		return;
+	}
+	var X=new MLSBatchScript({script:js});
+	STUDY.setBatchScript(batch_script_name,X);
+	if (!STUDY.save(mls_fname))
+		return;
+	console.log ('Imported batch_script ['+batch_script_name+'] from ['+batch_script_path+'] into study ['+mls_fname+']');
+}
+
+function handle_list_batch_scripts(mls_fname) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var names=STUDY.batchScriptNames();
+	for (var i=0; i<names.length; i++) {
+		console.log (names[i]);
+	}
+}
+
+function handle_edit_batch_script(mls_fname,batch_script_name) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var X=STUDY.batchScript(batch_script_name);
+	if (!X) {
+		console.error('Unable to find batch_script by name: '+batch_script_name);
+		return;
+	}
+
+	var tmp_fname=get_temporary_file_name_with_extension('js');
+
+	require('fs').writeFileSync(tmp_fname,X.script(),'utf8');
+
+	console.log ('The script editor should now open. After modifying the batch script, click the save button. Your script will then be saved back to the study.');
+	exec_sync('mlpipeline '+tmp_fname);
+	var script2=require('fs').readFileSync(tmp_fname,'utf8');
+	require('fs').unlinkSync(tmp_fname);
+
+	if (X.script()!=script2) {
+		X.setScript(script2);
+		console.log ('Updating batch script: '+batch_script_name);
+		STUDY.setBatchScript(batch_script_name,X);
+		STUDY.save(mls_fname);
+		console.log ('Batch script ['+batch_script_name+'] in study ['+mls_fname+'] has been updated.');
+	}
+	else {
+		console.log ('Batch script was not changed. Not updating.');
+	}
+}
+
+function handle_run_batch_script(mls_fname,batch_script_name_or_file,output_directory) {
+	var STUDY=new MLStudy();
+	if (!STUDY.load(mls_fname)) return;
+
+	var X=STUDY.batchScript(batch_script_name_or_file);
+	if (!X) {
+		if (!require('fs').existsSync(batch_script_name_or_file)) {
+			console.error('Unable to find batch script or file: '+batch_script_name);
+			return;	
+		}
+		var script=require('fs').readFileSync(batch_script_name_or_file,'utf8');
+		X=new MLSBatchScript({name:batch_script_name_or_file});
+		X.setScript(script);
+	}
+
+	if (!require('fs').existsSync(output_directory)) {
+		require('fs').mkdirSync(output_directory);
+	}
+
+	var study=STUDY.object();
+	study.datasets=study.datasets||{};
+	for (var key in study.datasets) {
+		study.datasets[key].id=key;
+	}
+
+	var _MLS={
+		study:study,
+		runPipeline:function(pipeline_name,subpipeline_name,inputs,outputs,params) {
+			if (!runPipeline(pipeline_name,subpipeline_name,inputs,outputs,params)) {
+				clean_up_temporary_files();
+				console.error('Error running pipeline '+pipeline_name+' '+subpipeline_name);
+				process.exit(-1);
+			}
+		},
+		getResultPath:function(obj,name) {
+			return getResultPath(obj,name);
+		},
+		computePrv:function(path) {
+			return computePrv(path);
+		},
+		writeJson:function(obj,path) {
+			writeJson(obj,path);
+		}
+	}
+	eval(X.script());
+	clean_up_temporary_files();
+
+	function runPipeline(pipeline_name,subpipeline_name,inputs,outputs,params) {
+		var X=STUDY.pipeline(pipeline_name);
+		if (!X) {
+			console.error('Unable to find pipeline with name: '+pipeline_name);
+			return false;
+		}
+		var tmp_fname=get_temporary_file_name_with_extension('mlp');
+		require('fs').writeFileSync(tmp_fname,JSON.stringify(X.object(),null,4));
+		var cmd='mlp-run '+tmp_fname+' '+subpipeline_name;
+		for (var key in inputs) {
+			var val=inputs[key];
+			var fname;
+			if (typeof(val)=='string') {
+				fname=val;
+			}
+			else {
+				var tmp2_fname=get_temporary_file_name_with_extension('prv');
+				require('fs').writeFileSync(tmp2_fname,JSON.stringify(val.prv||{}));
+				fname=tmp2_fname;
+			}
+			cmd+=' --'+key+'='+fname;
+		}
+		for (var key in outputs) {
+			cmd+=' --'+key+'='+outputs[key];
+		}
+		for (var key in params) {
+			cmd+=' --'+key+'='+params[key];
+		}
+		console.log ('RUNNING '+cmd);
+		exec_sync(cmd);
+		return true;
+	}
+	function getResultPath(obj,name) {
+		var path;
+		if (!obj) {
+			path=output_directory+'/'+name;
+		}
+		else {
+			path=output_directory+'/'+id;
+			if (!require('fs').existsSync(path)) {
+				require('fs').mkdirSync(path);
+			}
+			path+='/'+name;
+		}
+		return path;
+	}
+	function computePrv(path_or_fileobj) {
+		if (typeof(path_or_fileobj)=='string') {
+			if (ends_with(path_or_fileobj,'.prv')) {
+				return try_parse_json(require('fs').readFileSync(path_or_fileobj,'utf8'));
+			}
+			var prv0=compute_prv_sync(path_or_fileobj);
+			if (!prv0) {
+				process.exit(-1);
+			}
+			return prv0;
+		}
+		else {
+			return path_or_fileobj.prv||null;
+		}
+	}
+	function writeJson(obj,path) {
+		require('fs').writeFileSync(path,JSON.stringify(obj,null,4),'utf8');
+	}
+}
+
+
+
+function get_temporary_file_name_with_extension(ext) {
+	var ret='';
+	var done=false;
+	var i=1;
+	while (!done) {
+		ret=require('os').tmpdir()+'/tmp_mls-'+i+'.'+ext;
+		if (!require('fs').existsSync(ret))
+			done=true;
+		else
+			i++;
+	}
+	s_temporary_files.push(ret);
+	return ret;
+}
+function clean_up_temporary_files() {
+	for (var i in s_temporary_files) {
+		var fname=s_temporary_files[i];
+		if (require('fs').existsSync(fname)) {
+			console.log ('Removing temporary file: '+fname);
+			require('fs').unlinkSync(fname);
+		}
+	}
+}
+
+function file_part(path) {
+	var ind=path.lastIndexOf('/');
+	if (ind>=0) return path.slice(ind+1);
+	else return path;
+}
+
+function MLStudy() {
+	var that=this;
+	
+	this.object=function() {return clone(m_object);};
+	this.setObject=function(obj) {setObject(obj);};
+	this.load=function(mls_fname) {return load(mls_fname);};
+	this.save=function(mls_fname) {return save(mls_fname);};
+
+	this.datasetIds=function() {return datasetIds();};
+	this.dataset=function(id) {return dataset(id);};
+
+	this.pipelineNames=function() {return pipelineNames();};
+	this.pipeline=function(name) {return pipeline(name);};
+	this.setPipeline=function(name,X) {setPipeline(name,X);};
+	this.removePipeline=function(name) {removePipeline(name);};
+	
+	//this.jobIds=function() {return jobIds();};
+	//this.job=function(id) {return job(id);};
+
+	this.batchScriptNames=function() {return batchScriptNames();};
+	this.batchScript=function(name) {return batchScript(name);};
+	this.setBatchScript=function(name,X) {setBatchScript(name,X);};
+	this.removeBatchScript=function(name) {removeBatchScript(name);};
+
+	this.setDataset=function(id,X) {setDataset(id,X);};
+	this.importDataset=function(id,folder_path,callback) {importDataset(id,folder_path,callback);};
+	this.exportDataset=function(id,output_folder,callback) {exportDataset(id,output_folder,callback);};
+	this.removeDataset=function(id) {removeDataset(id);};
+
+	
+
+	var m_object={
+		datasets:{},
+		pipelines:{},
+		batch_scripts:{}
+	};
+
+	function setObject(obj) {
+		m_object=clone(obj);
+		m_object.datasets=m_object.datasets||{};
+		m_object.pipelines=m_object.pipelines||{};
+		m_object.batch_scripts=m_object.batch_scripts||{};
+	}
+
+	function load(mls_fname) {
+		var mlsobj=try_parse_json(require('fs').readFileSync(mls_fname));
+		if (!mlsobj) {
+			console.error('Error parsing json.');
+			return false;
+		}
+		that.setObject(mlsobj);
+		return true;
+	}
+	function save(mls_fname) {
+		require('fs').writeFileSync(mls_fname,JSON.stringify(m_object,null,4),'utf8');
+		return true;
+	}
+
+	function datasetIds() {
+		var ret=Object.keys(m_object.datasets);
+		ret.sort();
+		return ret;
+	}
+	function dataset(id) {
+		if (!(id in m_object.datasets)) return null;
+		var obj=m_object.datasets[id];
+		var ret=new MLSDataset(obj);
+		return ret;
+	}
+	function pipelineNames() {
+		var ret=Object.keys(m_object.pipelines);
+		ret.sort();
+		return ret;
+	}
+	function pipeline(name) {
+		if (!(name in m_object.pipelines)) return null;
+		var obj=m_object.pipelines[name];
+		var ret=new MLSPipeline(obj);
+		return ret;
+	}
+	/*
+	function jobIds() {
+		var ret=Object.keys(m_jobs_by_id);
+		ret.sort();
+		return ret;
+	}
+	function job(id) {
+		var obj=m_jobs_by_id[id]||{};
+		var ret=new MLSJob(obj);
+		return ret;
+	}
+	*/
+	function batchScriptNames() {
+		var ret=Object.keys(m_object.batch_scripts);
+		ret.sort();
+		return ret;
+	}
+	function batchScript(name) {
+		if (!(name in m_object.batch_scripts)) return null;
+		var obj=m_object.batch_scripts[name];
+		var ret=new MLSBatchScript(obj);
+		return ret;
+	}
+	function setDataset(id,X) {
+		m_object.datasets[id]=X.object();
+	}
+	function importDataset(id,folder_path,callback) {
+		var X=new MLSDataset({});
+		if (!X.importFromFolder(folder_path)) {
+			return;
+		}
+		that.setDataset(id,X);
+		callback();
+	}
+	function exportDataset(id,output_folder,callback) {
+		var X=that.dataset(id);
+		if (!id) {
+			console.error('Unable to find dataset with id: '+id);
+			return;
+		}
+		if (!X.exportToFolder(output_folder))
+			return;
+		callback();
+	}
+	function removeDataset(id) {
+		if (id in m_object.datasets)
+			delete m_object.datasets[id];
+	}
+	function setPipeline(name,X) {
+		m_object.pipelines[name]=X.object();
+	}
+	function removePipeline(name) {
+		if (name in m_object.pipelines)
+			delete m_object.pipelines[name];
+	}
+	function setBatchScript(name,X) {
+		m_object.batch_scripts[name]=X.object();
+	}
+	function removeBatchScript(name) {
+		if (name in m_object.batch_scripts)
+			delete m_object.batch_scripts[name];
+	}
+}
+
+function MLSDataset(obj) {
+	var that=this;
+	this.setObject=function(obj) {m_object=clone(obj);};
+	this.object=function() {return clone(m_object);};
+	this.importFromFolder=function(folder_path) {return importFromFolder(folder_path);};
+	this.exportToFolder=function(folder_path) {return exportToFolder(folder_path);};
+
+	this.id=function() {return m_object.id||'';};
+	this.fileNames=function() {return fileNames();};
+	this.file=function(name) {return file(name);};
+	this.parameters=function() {return clone(m_object.parameters||{});};
+
+	var m_object={};
+
+	function exportToFolder(folder_path) {
+		if (require('fs').existsSync(folder_path)) {
+			console.error('File or folder already exists: '+folder_path);
+			return false;
+		}
+		var params0=that.parameters();
+		require('fs').mkdirSync(folder_path);
+		require('fs').writeFileSync(folder_path+'/params.json',JSON.stringify(params0,null,4));
+		var fnames=that.fileNames();
+		for (var i=0; i<fnames.length; i++) {
+			var file0=that.file(fnames[i]);
+			if (!file0) {
+				return false;
+			}
+			var prv0=file0.prv;
+			require('fs').writeFileSync(folder_path+'/'+fnames[i]+'.prv',JSON.stringify(prv0,null,4));
+		}
+		return true;
+	}
+
+	function importFromFolder(folder_path) {
+		m_object.files={};
+		m_object.parameters={};
+		var paths=directory_listing(folder_path,true);
+		for (var i=0; i<paths.length; i++) {
+			var path0=paths[i];
+			if (path0=='params.json') {
+				console.log ('Parsing parameters file: '+folder_path+'/'+path0);
+				var json=require('fs').readFileSync(folder_path+'/'+path0,'utf8');
+				var params0=try_parse_json(json);
+				if (!params0) {
+					console.error('Error parsing json in file: '+folder_path+'/'+path0);
+					return false;
+				}
+				m_object.parameters=clone(params0);
+			}
+			else {
+				if (ends_with(path0,'.prv')) {
+					console.log ('Parsing file: '+folder_path+'/'+path0);
+					var json=require('fs').readFileSync(path0,'utf8');
+					var prv0=try_parse_json(json);
+					if (!prv0) {
+						console.error('Error parsing json in file: '+folder_path+'/'+path0);
+						return false;
+					}
+					var path1=path0.slice(0,path0.length-('.prv').length);
+					var file0={
+						prv:prv0
+					};
+					m_object.files[path1]=file0;
+				}
+				else {
+					console.log ('Computing checksum for file: '+folder_path+'/'+path0);
+					var prv0=compute_prv_sync(folder_path+'/'+path0);
+					if (!prv0) return;
+					var file0={
+						prv:prv0
+					};
+					m_object.files[path0]=file0;
+				}
+			}
+		}
+		return true;
+	}
+
+	function fileNames() {
+		var files=m_object.files||{};
+		var ret=[];
+		for (var key in files) {
+			ret.push(key);
+		}
+		return ret;
+	}
+
+	function file(name) {
+		return (m_object.files||{})[name]||null;
+	}
+
+	that.setObject(obj||{});
+}
+
+function compute_prv_sync(path) {
+	var stat0=prv_stat_sync(path);
+	if (!stat0) {
+		console.error('Error in prv-stat of: '+path);
+		return null;
+	}
+	var prv0={
+		original_checksum:stat0.checksum,
+		original_fcs:stat0.fcs,
+		original_size:stat0.size,
+		original_path:path
+	};
+	return prv0;
+}
+
+function directory_listing(folder,recursive) {
+	var filenames=require('fs').readdirSync(folder);
+	var ret=[];
+	for (var i=0; i<filenames.length; i++) {
+		var path0=folder+'/'+filenames[i];
+		if (require('fs').statSync(path0).isDirectory()) {
+			if (recursive) {
+				var tmp=directory_listing(path0);
+				for (var j=0; j<tmp.length; j++) {
+					ret.push(filenames[i]+'/'+tmp[j]);
+				}
+			}
+		}
+		else {
+			ret.push(filenames[i]);
+		}
+	}
+	return ret;
+}
+
+function MLSPipeline(obj) {
+	var that=this;
+	this.setObject=function(obj) {m_object=clone(obj);};
+	this.object=function() {return clone(m_object);};
+
+	var m_object={};
+
+	that.setObject(obj||{});
+}
+
+/*
+function MLSJob(obj) {
+	var that=this;
+	this.setObject=function(obj) {m_object=clone(obj);};
+	this.object=function() {return clone(m_object);};
+
+	var m_object={};
+
+	that.setObject(obj||{});
+}
+*/
+
+function MLSBatchScript(obj) {
+	var that=this;
+	this.setObject=function(obj) {m_object=clone(obj);};
+	this.object=function() {return clone(m_object);};
+	this.setScript=function(script) {m_object.script=script;};
+	this.script=function() {return m_object.script||'';};
+
+	var m_object={};
+
+	that.setObject(obj||{});
+}
+
+function clone(obj) {
+	return JSON.parse(JSON.stringify(obj));
+}
+
+function foreach_async(list,func,callback) {
+  var index=0;
+  do_next();
+  function do_next() {
+    if (index>=list.length) {
+      callback(null);
+      return;
+    }
+    func(list[index],function() {
+      index++;
+      do_next();
+    });
+  }
+}
+
+function exec_sync(cmd) {
+	require('child_process').execSync(cmd,{stdio:[0,1,2]});
+}
+
+function copy_file_sync(src,dst) {
+	exec_sync('cp '+src+' '+dst);
+}
+
+function prv_stat_sync(path) {
+	var r = require('child_process').execSync('prv-stat '+path);
+	var str=r.toString();
+	var obj=try_parse_json(str.trim());
+	if (!obj) {
+		console.error('Error parsing json in output of prv-stat');
+		return null;
+	}
+	return obj;
+}
+
+function try_parse_json(str) {
+	try {
+		return JSON.parse(str);
+	}
+	catch(err) {
+		return null;
+	}
+}
+
+function CLParams(argv) {
+	this.unnamedParameters=[];
+	this.namedParameters={};
+
+	var args=argv.slice(2);
+	for (var i=0; i<args.length; i++) {
+		var arg0=args[i];
+		if (arg0.indexOf('--')===0) {
+			arg0=arg0.slice(2);
+			var ind=arg0.indexOf('=');
+			if (ind>=0) {
+				this.namedParameters[arg0.slice(0,ind)]=arg0.slice(ind+1);
+			}
+			else {
+				var next0=args[i+1]||'';
+				if ((next0)&&(!starts_with(next0,'--'))) {
+					this.namedParameters[arg0]=next0;	
+					i++;
+				}
+				else {
+					this.namedParameters[arg0]='';
+				}
+			}
+		}
+		else if (arg0.indexOf('-')===0) {
+			arg0=arg0.slice(1);
+			this.namedParameters[arg0]='';
+		}
+		else {
+			this.unnamedParameters.push(arg0);
+		}
+	}
+	function starts_with(str,str2) {
+		return (str.slice(0,str2.length)==str2);
+	}
+};
+
+function ends_with(str,str2) {
+	return (str.slice(str.length-str2.length)==str2);
+}

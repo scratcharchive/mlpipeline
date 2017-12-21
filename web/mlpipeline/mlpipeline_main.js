@@ -101,11 +101,26 @@ function jsqmain(query) {
     }
 
     function setup_local_mode() {
+        window.download=function(text,doc_name,path) {
+            mlpinterface.download(text,path||''); //send it back to the C++
+        }
+        if (window.js_file_content) {
+            var Y=new JavaScriptEditor();
+            Y.setScript(window.js_file_content);
+            Y.showFullBrowser();
+            Y.onSaved(function() {
+                console.log('onSaved');
+                download(Y.script(),'',window.js_file_path);
+                mlpinterface.quit();
+            });
+            Y.onCanceled(function() {
+                mlpinterface.quit();
+            });
+            return;
+        }
         var X=new MainWindow(null,{local_mode:local_mode});
         X.setDocStorClient(DSC);
-        window.download=function(text) {
-            mlpinterface.download(text); //send it back to the C++
-        }
+        
         window.open=function(url) {
             alert('open: '+url);
         }
@@ -141,6 +156,7 @@ function jsqmain(query) {
                 show_full_browser_message('Unable to connect to local larinet server.','You must start the larinet service on your computer before running mlpipeline locally. <br /><br /> Simply open a new terminal and run "mlp-larinet". Keep it running while you are using mlpipeline.');
                 return;
             }
+
             X.showFullBrowser();
             X.setProcessingServerName('local');
 
@@ -174,6 +190,7 @@ function jsqmain(query) {
                 setTimeout(function() {
                     X.loadFromDocumentObject(obj);
                     X.setDocumentName(window.mlp_file_name);
+                    X.setUnmodified();
                 },500);
                 
             }
