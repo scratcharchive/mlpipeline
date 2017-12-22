@@ -173,6 +173,7 @@ function set_document_content_to_docstor(DSC,doc_id,content,callback) {
 
 function download_document_content_from_docstor(DSC,owner,title,callback) {
     var query={owned_by:owner,filter:{"attributes.title":title}};
+    query.and_shared_with='[public]';
     DSC.findDocuments(query,function(err,docs) {
         if (err) {
             callback('Problem finding document: '+err);
