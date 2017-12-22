@@ -95,7 +95,6 @@ function MLSMainWindow(O) {
 	var m_top_widget=new MLSTopWidget();
 	m_top_widget.setParent(O);
 	m_top_widget.setMLSManager(m_mls_manager);
-	JSQ.connect(m_top_widget,'save_changes',O,save_changes);
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
 	function update_layout() {
@@ -144,6 +143,7 @@ function MLSMainWindow(O) {
         callback(null);
 	}
 
+	JSQ.connect(m_top_widget,'save_changes',O,save_changes);
 	function save_changes() {
 		var obj=m_mls_manager.study().object();
 		var content=JSON.stringify(obj,null,4);
@@ -160,6 +160,19 @@ function MLSMainWindow(O) {
 			download(content,'',m_file_path);
 			m_top_widget.setOriginalStudyObject(obj);
 		}
+	}
+
+	JSQ.connect(m_top_widget,'download_study',O,save_changes);
+	function download_study() {
+		var obj=m_mls_manager.study().object();
+		var content=JSON.stringify(obj,null,4);
+		if (m_file_source=='docstor') {
+			fname=m_docstor_info.title;
+		}
+		else {
+			fname=m_file_path;
+		}
+		download(content,fname);
 	}
 
 	update_layout();
@@ -209,6 +222,11 @@ function MLSTopWidget(O) {
 	var m_original_study_object={};
 	var m_mls_manager=null;
 	var m_content=$('<div><button id=save_changes>Save changes</button></div>');
+	if (window.mlpipeline_mode!='local') {
+		var link0=$('<button>Download study</button>');
+		m_content.append(link0);
+		link0.click(O.emit('download_study'));
+	}
 	O.div().append(m_content);
 
 	m_content.find('#save_changes').click(function() {

@@ -400,6 +400,23 @@ function MLSDatasetWidget(O) {
 		});
 		return ret;
 	}
+
+	JSQ.connect(m_bottom_widget,'download_params_file',O,download_params_file);
+	function download_params_file() {
+		var ds=get_dataset();
+		if (!ds) return;
+		var params=ds.parameters();
+		download(JSON.stringify(params,null,4),m_dataset_id+'_params.json');
+	}
+
+	JSQ.connect(m_bottom_widget,'download_json_file',O,download_json_file);
+	function download_json_file() {
+		var ds=get_dataset();
+		if (!ds) return;
+		var obj=ds.object();
+		download(JSON.stringify(obj,null,4),m_dataset_id+'.json');
+	}
+
 	function format_file_size(size_bytes) {
 	    var a=1024;
 	    var aa=a*a;
@@ -542,11 +559,19 @@ function KDDBottomWidget(O) {
 	this.refresh=function() {refresh();};
 
 	var download_params_link=$('<a href=#><span class=dataset_id></span>_params.json</a>');
-	download_params_link.click(download_params_file);
+	download_params_link.attr('title','Download parameters as JSON file');
+	download_params_link.click(function() {O.emit('download_params_file');});
+
+	var download_json_link=$('<a href=#><span class=dataset_id></span>.json</a>');
+	download_json_link.attr('title','Download dataset as JSON file');
+	download_json_link.click(function() {O.emit('download_json_file');});
 
 	var m_dataset_id='';
 	var m_content=$('<div></div>');
+	var m_manager=null;
 	m_content.append(download_params_link);
+	m_content.append('&nbsp;|&nbsp;');
+	m_content.append(download_json_link);
 
 	O.div().append(m_content);
 
@@ -560,12 +585,6 @@ function KDDBottomWidget(O) {
 
 	function refresh() {
 		m_content.find('.dataset_id').html(m_dataset_id);
-	}
-
-	function download_params_file() {
-		//todo: fix this
-		//var params=m_dataset.parameters();
-		//download(JSON.stringify(params,null,4),m_dataset_id+'_params.json');
 	}
 
 	update_layout();

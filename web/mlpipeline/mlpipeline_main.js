@@ -270,6 +270,7 @@ function jsqmain_mls(query) {
 
     if (local_mode) {
         window.download=function(text,doc_name,path) {
+            console.log('test');
             mlpinterface.download(text,path||''); //send it back to the C++
         }
         window.open=function(url,target) {
