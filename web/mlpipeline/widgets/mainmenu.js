@@ -40,7 +40,10 @@ function MainMenu(O,options) {
 	//add_menu_item(file_menu,'Load from Google Drive...',function() {O.emit('load_from_google_drive');});
 	add_menu_divider(file_menu); ///-----------------------------------
 	add_menu_item(file_menu,'Save to browser storage...',function() {O.emit('save_to_browser_storage');},'Ctrl+s');
-	add_menu_item(file_menu,'Save to file...',function() {O.emit('save_to_file');});
+	if (window.mlp_file_path) {
+		add_menu_item(file_menu,'Save to file',function() {console.log('calling save_to_file.'); O.emit('save_to_file',{path:window.mlp_file_path});});
+	}
+	add_menu_item(file_menu,'Save to file as...',function() {O.emit('save_to_file');});
 	if (!options.local_mode)
 		add_menu_item(file_menu,'Save to cloud...',function() {O.emit('save_to_docstor');});
 	add_menu_divider(file_menu); ///-----------------------------------

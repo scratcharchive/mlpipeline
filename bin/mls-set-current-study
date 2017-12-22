@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Ensure that this script is sourced, not executed
+if [[ -n $BASH_VERSION ]] && [[ "$(basename "$0" 2> /dev/null)" == "mls-set-current-study" ]]; then
+    echo "Error: this command must be sourced because an environment variable needs to be set for this session."
+    echo "Instead, run 'source mls-set-current-study $1'"
+    exit 1
+fi
+
+export MLS_CURRENT_STUDY=$1
+
+echo "Current study set to $MLS_CURRENT_STUDY"
+
+if [ -z "$MLS_ORIGINAL_PROMPT" ]
+then
+	export MLS_ORIGINAL_PROMPT="$PS1"
+fi
+
+if [ -z "$1" ]
+then
+	export PS1="$MLS_ORIGINAL_PROMPT"
+else
+	export PS1="($1) $MLS_ORIGINAL_PROMPT"
+fi
+
+## autocomplete
+_script()
+{
+  _script_commands=" \
+create-study set-current-study summarize-study \
+import-dataset list-datasets show-dataset summarize-dataset export-dataset \
+import-pipeline export-pipeline list-pipelines edit-pipeline \
+import-batch-script export-batch-script list-batch-scripts edit-batch-script run-batch-script \
+"
+
+  local cur prev
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=( $(compgen -W "${_script_commands}" -A file -- ${cur}) )
+
+  return 0
+}
+complete -o nospace -F _script mls
+complete -o nospace -F _script ./mls

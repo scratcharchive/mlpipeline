@@ -20,15 +20,18 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMessageBox>
 #include <QProcess>
+#include <QCoreApplication>
 
-void write_text_file(const QString& path, const QString& txt)
+bool write_text_file(const QString& path, const QString& txt)
 {
     QFile f(path);
     if (!f.open(QFile::WriteOnly | QFile::Text))
-        return;
+        return false;
     QTextStream out(&f);
     out << txt;
+    return true;
 }
 #if QT_VERSION >= 0x050600
 MLPInterface::MLPInterface(QWebEnginePage *frame_in)
@@ -54,11 +57,22 @@ void MLPInterface::open_mountainview(QString mv2_json)
     QProcess::startDetached(cmd);
 }
 
-void MLPInterface::download(QString text)
+void MLPInterface::download(QString text, QString file_name)
 {
-    QString fname=QFileDialog::getSaveFileName(0,"Save file to your computer");
-    if (fname.isEmpty()) return;
-    write_text_file(fname,text);
+    QString fname=file_name;
+    if (fname.isEmpty()) {
+        fname=QFileDialog::getSaveFileName(0,"Save file to your computer");
+        if (fname.isEmpty()) return;
+    }
+    if (!write_text_file(fname,text)) {
+        QMessageBox::critical(0,"Unable to save file","Unable to save file: "+fname);
+    }
+    QMessageBox::information(0,"File saved","File saved.");
+}
+
+void MLPInterface::quit()
+{
+    qApp->quit();
 }
 
 void MLPInterface::larinetserver(QString req_json,QString callback_str)
