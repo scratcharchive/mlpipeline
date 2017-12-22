@@ -266,7 +266,16 @@ function jsqmain_mls(query) {
     query=query||{};
 
     // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
-    var local_mode=(window.mlpipeline_mode=='local'); 
+    var local_mode=(window.mlpipeline_mode=='local');
+
+    if (local_mode) {
+        window.download=function(text,doc_name,path) {
+            mlpinterface.download(text,path||''); //send it back to the C++
+        }
+        window.open=function(url,target) {
+            alert('open: '+url);
+        }
+    } 
 
     // Determine whether we are running on localhost (development mode)
     var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
@@ -291,67 +300,31 @@ function jsqmain_mls(query) {
         }
         show_full_browser_message('','');
 
-        var Y=new MLSWidget();
-        var MM=new MLSManager();
+        var Y=new MLSMainWindow();
+        Y.setDocStorClient(DSC);
 
-        get_study_object(function(obj) {
-            MM.setMLSObject(obj);
-            Y.setMLSManager(MM);
-            Y.showFullBrowser();
-        });
-    });
-
-    function get_study_object(cb) {
         if (window.mls_file_content) {
-            var obj=try_parse_json(window.mls_file_content);
-            if (!obj) {
-                alert('Unable to parse mls file content');
-                return;
-            }
-            cb(obj);    
-        }
-        else {
-            download_document_content_from_docstor(DSC,query.owner,query.docstor,function(err,content) {
+            Y.loadFromFileContent(window.mls_file_path,window.mls_file_content,function(err) {
                 if (err) {
-                    alert('Error loading document: '+err);
+                    alert(err);
                     return;
                 }
-                var obj=try_parse_json(content);
-                if (!obj) {
-                    alert('Unable to parse mls file content');
-                    return;
-                }
-                cb(obj);           
+                Y.showFullBrowser();
             });
         }
-    }
-
-}
-
-function download_document_content_from_docstor(DSC,owner,title,callback) {
-    var query={owned_by:owner,filter:{"attributes.title":title}};
-    DSC.findDocuments(query,function(err,docs) {
-        if (err) {
-            callback('Problem finding document: '+err);
-            return;
+        else {
+            Y.loadFromDocStor(query.owner,query,docstor,function(err) {
+                if (err) {
+                    alert(err);
+                    return;
+                }
+                Y.showFullBrowser();
+            });
         }
-        if (docs.length==0) {
-            callback('Document not found.');
-            return; 
-        }
-        if (docs.length>1) {
-            callback('Error: more than one document with this title and owner found.');
-            return; 
-        }
-        DSC.getDocument(docs[0]._id,{include_content:true},function(err,doc0) {
-            if (err) {
-                callback('Problem getting document content: '+err);
-                return;
-            }
-            callback(null,doc0.content);
-        });
     });
 }
+
+
 
 function login(DSC,opts,callback) {
     if (opts.local_mode) {

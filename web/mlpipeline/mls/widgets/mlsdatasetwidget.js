@@ -19,12 +19,11 @@ function MLSDatasetWidget(O) {
 	O.div().addClass('MLSDatasetWidget');
 
 	this.setMLSManager=function(M) {m_manager=M;};
-	this.setDataset=function(ds_id,ds) {m_dataset_id=ds_id; m_dataset=ds; m_top_widget.setDataset(ds_id,ds); m_bottom_widget.setDataset(ds_id,ds);};
+	this.setDatasetId=function(ds_id) {m_dataset_id=ds_id; m_top_widget.setDatasetId(ds_id); m_bottom_widget.setDatasetId(ds_id);};
 	this.refresh=function() {refresh();};
 
 	var m_manager=null;
 	var m_dataset_id='';
-	var m_dataset=null;
 	var m_rawbucket_client=new RawBucketClient();
 	O.div().css({'overflow-y':'auto'});
 	var m_files_table=new MLTableWidget();
@@ -41,14 +40,15 @@ function MLSDatasetWidget(O) {
 	JSQ.connect(m_top_widget,'refresh',O,refresh);
 	JSQ.connect(m_bottom_widget,'refresh',O,refresh);
 
-	m_description_widget.onDescriptionEdited(function() {
-		if (!m_dataset) return;
-		var prop=m_dataset.properties();
+	m_description_widget.onDescriptionEdited(function() {;
+		var ds=get_dataset();
+		if (!ds) return;
+		var prop=ds.properties();
 		prop.description=m_description_widget.description();
-		m_dataset.setProperties(prop,function(err) {
-			if (err) {alert(err); return;}
-			refresh();
-		});
+		ds.setProperties(prop);
+		set_dataset(ds);
+		refresh();
+		
 	});
 
 	JSQ.connect(O,'sizeChanged',O,update_layout);
@@ -70,13 +70,21 @@ function MLSDatasetWidget(O) {
 	function refresh() {
 		update_tables();
 		m_description_widget.setDescription('');
-		if (!m_dataset) return;
+		var ds=get_dataset();
+		if (!ds) return;
 		m_description_widget.setDescription('Loading...');
-		m_description_widget.setDescription(m_dataset.properties().description||'');
+		m_description_widget.setDescription(ds.properties().description||'');
 		update_tables();
 		setTimeout(function() {
 			refresh_rb_elements();	
 		},100);
+	}
+
+	function get_dataset() {
+		return m_manager.study().dataset(m_dataset_id);
+	}
+	function set_dataset(ds) {
+		m_manager.study().setDataset(m_dataset_id,ds);
 	}
 
 	function update_tables() {
@@ -87,13 +95,14 @@ function MLSDatasetWidget(O) {
 		m_files_table.headerRow().cell(4).html('RB');
 		
 		m_files_table.clearRows();
-		if (m_dataset) {
-			var keys=m_dataset.fileNames();
+		var ds=get_dataset();
+		if (ds) {
+			var keys=ds.fileNames();
 			keys.sort();
 			for (var i in keys) {
 				var key=keys[i];
 				var row=m_files_table.createRow();
-				update_file_row(row,key,m_dataset.file(key));
+				update_file_row(row,key,ds.file(key));
 				m_files_table.addRow(row);	
 			}
 			var link=$('<a href=#>Add file</a>');
@@ -107,8 +116,9 @@ function MLSDatasetWidget(O) {
 		m_params_table.headerRow().cell(1).html('Parameter');
 		m_params_table.headerRow().cell(2).html('Value');
 		m_params_table.clearRows();
-		if (m_dataset) {
-			var params=m_dataset.parameters();
+		var ds=get_dataset();
+		if (ds) {
+			var params=ds.parameters();
 			var keys=Object.keys(params);
 			keys.sort();
 			for (var i in keys) {
@@ -164,7 +174,13 @@ function MLSDatasetWidget(O) {
 				alert('Error parsing json');
 				return;
 			}
-			m_dataset.setParameters(obj);
+			var ds=get_dataset();
+			if (!ds) {
+				alert('ds is null');
+				return;
+			}
+			ds.setParameters(obj);
+			set_dataset(ds);
 			refresh();
 		});
 	}
@@ -216,31 +232,43 @@ function MLSDatasetWidget(O) {
 		}
 	}
 	function edit_parameter(name) {
-		var params=m_dataset.parameters();
+		var ds=get_dataset();
+		if (!ds) return;
+		var params=ds.parameters();
 		var val=params[name]||'';
 		var new_val=prompt('New value for parameter '+name+':',val);
 		if (new_val===null) return;
 		if (new_val==val) return;
 		params[name]=new_val;
-		m_dataset.setParameters(params);
+		ds.setParameters(params);
+		set_dataset(ds);
 		refresh();
 	}
 	function add_file() {
 		var name=prompt('Name for new file:');
 		if (!name) return;
-		m_dataset.addFile(name,{});
+		var ds=get_dataset();
+		if (!ds) return;
+		ds.addFile(name,{});
+		set_dataset(ds);
 		refresh();
 		upload_prv_file(name);
 	}
 	function remove_file(name) {
 		if (confirm('Remove this file from dataset?')) {
-			m_dataset.removeFile(name);
+			var ds=get_dataset();
+			if (!ds) return;
+			ds.removeFile(name);
+			set_dataset(ds);
 			refresh();
 		}
 	}
 	function remove_parameter(name) {
 		if (confirm('Remove this parameter?')) {
-			m_dataset.removeParameter(name);
+			var ds=get_dataset();
+			if (!ds) return;
+			ds.removeParameter(name);
+			set_dataset(ds);
 			refresh();
 		}
 	}
@@ -248,9 +276,12 @@ function MLSDatasetWidget(O) {
 		var new_name=prompt('New name for file:',name);
 		if (!new_name) return;
 		if (new_name==name) return;
-		var file0=m_dataset.file(name);
-		m_dataset.removeFile(name);
-		m_dataset.setFile(name,file0);
+		var ds=get_dataset();
+		if (!ds) return;
+		var file0=ds.file(name);
+		ds.removeFile(name);
+		ds.setFile(name,file0);
+		set_dataset(ds);
 		refresh();
 	}
 	function upload_prv_file(name) {
@@ -270,7 +301,10 @@ function MLSDatasetWidget(O) {
 					alert('Invalid prv file. Field not found: original_checksum.');
 					return;
 				}
-				m_dataset.setFile(name,{prv:prv});
+				var ds=get_dataset();
+				if (!ds) return;
+				ds.setFile(name,{prv:prv});
+				set_dataset(ds);
 				refresh();
 			}
 			else {
@@ -283,13 +317,17 @@ function MLSDatasetWidget(O) {
 		});
 	}
 	function download_prv_file(name) {
-		var file0=m_dataset.file(name);
+		var ds=get_dataset();
+		if (!ds) return;
+		var file0=ds.file(name);
 		var prv=file0.prv||{};
 		var json=JSON.stringify(prv,null,4);
     	download(json,name+'.prv');
 	}
 	function download_original_file(name) {
-		var file0=m_dataset.file(name);
+		var ds=get_dataset();
+		if (!ds) return;
+		var file0=ds.file(name);
 		var prv=file0.prv||{};
 		var sha1=prv.original_checksum||'';
 		var size=prv.original_size||0;
@@ -391,9 +429,12 @@ function MLSDatasetWidget(O) {
 	function add_param() {
 		var name=prompt('Parameter name:');
 		if (!name) return;
-		var params=m_dataset.parameters();
+		var ds=get_dataset();
+		if (!ds) return;
+		var params=ds.parameters();
 		params[name]='';
-		m_dataset.setParameters(params);
+		ds.setParameters(params);
+		set_dataset(ds);
 		refresh();
 		edit_parameter(name);
 	}
@@ -466,11 +507,10 @@ function KDDTopWidget(O) {
 	JSQWidget(O);
 	O.div().addClass('KDDTopWidget');
 
-	this.setDataset=function(ds_id,ds) {m_dataset_id=ds_id; m_dataset=ds;};
+	this.setDatasetId=function(ds_id) {m_dataset_id=ds_id;};
 	this.refresh=function() {refresh();};
 
 	var m_dataset_id='';
-	var m_dataset=null;
 	var m_content=$('<div><a href=# id=refresh_link title="Click to refresh this dataset"><span id=title class=title></span></a></div>');
 	O.div().append(m_content);
 
@@ -498,13 +538,12 @@ function KDDBottomWidget(O) {
 	JSQWidget(O);
 	O.div().addClass('KDDBottomWidget');
 
-	this.setDataset=function(ds_id,ds) {m_dataset_id=ds_id; m_dataset=ds;};
+	this.setDatasetId=function(ds_id) {m_dataset_id=ds_id;};
 	this.refresh=function() {refresh();};
 
 	var download_params_link=$('<a href=#><span class=dataset_id></span>_params.json</a>');
 	download_params_link.click(download_params_file);
 
-	var m_dataset=null;
 	var m_dataset_id='';
 	var m_content=$('<div></div>');
 	m_content.append(download_params_link);
@@ -524,8 +563,9 @@ function KDDBottomWidget(O) {
 	}
 
 	function download_params_file() {
-		var params=m_dataset.parameters();
-		download(JSON.stringify(params,null,4),m_dataset_id+'_params.json');
+		//todo: fix this
+		//var params=m_dataset.parameters();
+		//download(JSON.stringify(params,null,4),m_dataset_id+'_params.json');
 	}
 
 	update_layout();
