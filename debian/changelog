@@ -1,3 +1,9 @@
+mlpipeline (0.11.8) xenial; urgency=medium
+
+  * separate branches for the builds
+
+ -- Jeremy Magland <jmagland@simonsfoundation.org>  Fri, 22 Dec 2017 04:23:01 -0500
+
 mlpipeline (0.11.7) xenial; urgency=medium
 
   * fix bug in mls and improve tab completion
