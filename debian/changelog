@@ -1,3 +1,9 @@
+mlpipeline (0.11.5-beta6ubuntu2) zesty; urgency=medium
+
+  * Build zesty package
+
+ -- Witold Wysota <wysota@wysota.org>  Mon, 18 Dec 2017 21:21:37 +0100
+
 mlpipeline (0.11.5-beta6) xenial; urgency=medium
 
   * do not require = symbol in CLParams
