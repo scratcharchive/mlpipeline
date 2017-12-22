@@ -1,4 +1,4 @@
-mlpipeline (0.11.6) zesty; urgency=medium
+mlpipeline (0.11.6z) zesty; urgency=medium
 
   * separate branches for the ubuntu versions
 
