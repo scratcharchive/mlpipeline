@@ -384,6 +384,32 @@ function login(DSC,opts,callback) {
     dlg.show();
 }
 
+function login_using_google(DSC,callback) {
+    var dlg=new GoogleLogInDlg();
+    dlg.show(); 
+    JSQ.connect(dlg,'accepted',null,function(sender,args) {
+        DSC.login({id_token:args.id_token},function(err0) {
+            if (err0) {
+                callback(err0);
+                return;
+            }
+            callback(null);
+        });
+    });
+}
+
+function login_using_passcode(DSC,callback) {
+    var passcode=prompt('Passcode:');
+    if (!passcode) return;
+    DSC.login({passcode:passcode},function(err0) {
+        if (err0) {
+            callback(err0);
+            return;
+        }
+        callback(null);
+    });
+}
+
 
 function MessageWidget(O) {
     O=O||this;

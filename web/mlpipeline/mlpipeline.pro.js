@@ -49,7 +49,7 @@ opts.SCRIPTS.push(
 	'prvlistwidget.js','newstepdialog.js','editmlpipelinewidget.css',
 	'mainwindow.js','mainmenu.js','statusbar.js','viewlistwidget.js',
 	'googledrive.js','greetingwindow.js','editstepdialog.js','mlpipelinelistwidget.js',
-	'importpipelinesdialog.js','textfilewindow.js','chooselogindlg.js',
+	'importpipelinesdialog.js','textfilewindow.js','chooselogindlg.js','googlelogindlg.js',
 	'recentfilewidget.js','mlplogwidget.js',
 	'javascripteditor.js'
 );
