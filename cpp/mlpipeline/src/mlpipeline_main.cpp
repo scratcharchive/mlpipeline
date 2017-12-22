@@ -24,6 +24,7 @@
 #include <QWebInspector>
 #include <QWebView>
 #include <QWebFrame>
+#include <QMessageBox>
 #endif
 #include <QHBoxLayout>
 #include <QSplitter>
@@ -115,6 +116,10 @@ int main(int argc, char *argv[]) {
     if (arg1.endsWith(".js")) {
         js_path=arg1;
     }
+    QString mls_path;
+    if (arg1.endsWith(".mls")) {
+        mls_path=arg1;
+    }
 #if QT_VERSION >= 0x050600
     QWebEngineView *W=new QWebEngineView;
 #else
@@ -128,6 +133,7 @@ int main(int argc, char *argv[]) {
     }
     //QString html=read_text_file(path+"/index.html");
     QString url="file:///"+path+"/index.html";
+    //QObject::connect(W->page(),&QWebPage::downloadRequested,[=]( const QNetworkRequest &req ) { (void)req; QMessageBox::information(0,"Download not supported","File downloads are not supported when using Qt versions prior 5.6."); });
 #if QT_VERSION >= 0x050600
     W->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     W->page()->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
@@ -164,6 +170,12 @@ int main(int argc, char *argv[]) {
         frame->evaluateJavaScript(QString("window.js_file_content=atob('%1');").arg((QString)str.toUtf8().toBase64()));
         frame->evaluateJavaScript(QString("window.js_file_path='%1';").arg(js_path));
         frame->evaluateJavaScript(QString("window.js_file_name='%1';").arg(QFileInfo(js_path).fileName()));
+    }
+    else if (!mls_path.isEmpty()) {
+        QString str=read_text_file(mls_path);
+        frame->evaluateJavaScript(QString("window.mls_file_content=atob('%1');").arg((QString)str.toUtf8().toBase64()));
+        frame->evaluateJavaScript(QString("window.mls_file_path='%1';").arg(mls_path));
+        frame->evaluateJavaScript(QString("window.mls_file_name='%1';").arg(QFileInfo(mls_path).fileName()));
     }
     else {
         frame->evaluateJavaScript(QString("window.mlp_load_default_browser_storage=true;"));

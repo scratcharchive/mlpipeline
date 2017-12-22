@@ -21,7 +21,6 @@ SOURCES += mlpipeline_main.cpp \
 HEADERS += \
     mlpinterface.h \
     clparams.h
-
 DEFINES += "MLP_DIR=\\\"$${MLP_DIR}\\\""
 
 include(../../installbin.pri)

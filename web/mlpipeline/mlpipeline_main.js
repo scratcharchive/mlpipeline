@@ -18,6 +18,11 @@ function jsqmain(query) {
     // The url query
     query=query||{};
 
+    if ( ((query.docstor)&&(ends_with(query.docstor,'.mls'))) || (window.mls_file_content) ) {
+        jsqmain_mls(query);
+        return;
+    }
+
     // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
     var local_mode=(window.mlpipeline_mode=='local'); 
 
@@ -104,6 +109,9 @@ function jsqmain(query) {
         window.download=function(text,doc_name,path) {
             mlpinterface.download(text,path||''); //send it back to the C++
         }
+        window.open=function(url,target) {
+            alert('open: '+url);
+        }
         if (window.js_file_content) {
             var Y=new JavaScriptEditor();
             Y.setScript(window.js_file_content);
@@ -125,16 +133,15 @@ function jsqmain(query) {
                 alert('Unable to parse mls file content');
                 return;
             }
-            Y.setMLSObject(obj);
+            var MM=new MLSManager();
+            MM.setMLSObject(obj);
+            Y.setMLSManager(MM);
             Y.showFullBrowser();
             return;
         }
         var X=new MainWindow(null,{local_mode:local_mode});
         X.setDocStorClient(DSC);
         
-        window.open=function(url) {
-            alert('open: '+url);
-        }
         X.kuleleClient().setLocalMode(true);
         X.kuleleClient().setLarinetServer(function(req,onclose,callback) {
             jsu_http_post_json('http://localhost:5005',req,{},function(resp) {
@@ -253,6 +260,131 @@ function jsqmain(query) {
     }
 }
 
+function jsqmain_mls(query) {
+
+    // The url query
+    query=query||{};
+
+    // Determine whether we are in local mode (i.e., whether we launched this as a desktop Qt GUI)
+    var local_mode=(window.mlpipeline_mode=='local'); 
+
+    // Determine whether we are running on localhost (development mode)
+    var on_localhost=jsu_starts_with(window.location.href,'http://localhost');
+
+    // Switch to https protocol if needed
+    if ((!local_mode)&&(!on_localhost)&&(location.protocol != 'https:')) {
+        location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
+    }
+
+    //Set up the DocStorClient, which will either be directed to localhost or the heroku app, depending on how we are running it.
+    var DSC=new DocStorClient();
+    if (on_localhost)
+        DSC.setDocStorUrl('http://localhost:5011');
+    else
+        DSC.setDocStorUrl('https://docstor1.herokuapp.com');
+
+    show_full_browser_message('MLStudy','Logging in...');
+    login(DSC,{passcode:query.passcode||'',local_mode:local_mode},function(err) {
+        if (err) {
+            show_full_browser_message('MLStudy','Error logging in: '+err);
+            return;
+        }
+        show_full_browser_message('','');
+
+        var Y=new MLSWidget();
+        var MM=new MLSManager();
+
+        get_study_object(function(obj) {
+            MM.setMLSObject(obj);
+            Y.setMLSManager(MM);
+            Y.showFullBrowser();
+        });
+    });
+
+    function get_study_object(cb) {
+        if (window.mls_file_content) {
+            var obj=try_parse_json(window.mls_file_content);
+            if (!obj) {
+                alert('Unable to parse mls file content');
+                return;
+            }
+            cb(obj);    
+        }
+        else {
+            download_document_content_from_docstor(DSC,query.owner,query.docstor,function(err,content) {
+                if (err) {
+                    alert('Error loading document: '+err);
+                    return;
+                }
+                var obj=try_parse_json(content);
+                if (!obj) {
+                    alert('Unable to parse mls file content');
+                    return;
+                }
+                cb(obj);           
+            });
+        }
+    }
+
+}
+
+function download_document_content_from_docstor(DSC,owner,title,callback) {
+    var query={owned_by:owner,filter:{"attributes.title":title}};
+    DSC.findDocuments(query,function(err,docs) {
+        if (err) {
+            callback('Problem finding document: '+err);
+            return;
+        }
+        if (docs.length==0) {
+            callback('Document not found.');
+            return; 
+        }
+        if (docs.length>1) {
+            callback('Error: more than one document with this title and owner found.');
+            return; 
+        }
+        DSC.getDocument(docs[0]._id,{include_content:true},function(err,doc0) {
+            if (err) {
+                callback('Problem getting document content: '+err);
+                return;
+            }
+            callback(null,doc0.content);
+        });
+    });
+}
+
+function login(DSC,opts,callback) {
+    if (opts.local_mode) {
+        callback(null);
+        return;
+    }
+    if (opts.passcode) {
+        DSC.login({passcode:opts.passcode},function(err0) {
+            if (err0) {
+                callback(err0);
+                return;
+            }
+            callback(null);
+        });
+        return;
+    }
+    var dlg=new ChooseLoginDlg();
+    JSQ.connect(dlg,'accepted',null,function() {
+        var choice=dlg.choice();
+        if (choice=='google') {
+            login_using_google(DSC,callback);
+        }
+        else if (choice=='passcode') {
+            login_using_passcode(DSC,callback); 
+        }
+        else if (choice=='anonymous') {
+            callback(null);
+        }
+    });
+    dlg.show();
+}
+
+
 function MessageWidget(O) {
     O=O||this;
     JSQWidget(O);
@@ -271,8 +403,9 @@ function MessageWidget(O) {
     }
 }
 
+var s_message_widget=new MessageWidget();
 function show_full_browser_message(msg,submessage) {
-    var X=new MessageWidget();
+    var X=s_message_widget;
     X.setMessage(msg);
     X.setSubmessage(submessage);
     X.showFullBrowser();
@@ -285,6 +418,10 @@ function try_parse_json(str) {
     catch(err) {
         return null;
     }
+}
+
+function ends_with(str,str2) {
+    return (str.slice(str.length-str2.length)==str2);
 }
 
 //window.callbacks={};

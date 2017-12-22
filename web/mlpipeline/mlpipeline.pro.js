@@ -60,6 +60,22 @@ opts.SCRIPTS.push(
 	'remotefilemanager.js','jobmanager.js'
 );
 
+opts.SOURCEPATH.push('mls')
+opts.SCRIPTS.push(
+	'rawbucketclient.js'
+);
+opts.SOURCEPATH.push('mls/widgets')
+opts.SCRIPTS.push(
+	'edittextdlg.js','mlsdatasetlistwidget.js','mlsdatasetwidget.js','mlswidget.js'
+);
+opts.STYLESHEETS.push(
+	'mlsdatasetwidget.css'
+);
+opts.SOURCEPATH.push('mls/managers')
+opts.SCRIPTS.push(
+	'mlsmanager.js'
+);
+
 opts.SOURCEPATH.push('jsutils')
 opts.SCRIPTS.push(
 	'jsutils.js','fileuploader.js','localstorage.js','url4text.js'
