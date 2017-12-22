@@ -162,7 +162,7 @@ function MLSMainWindow(O) {
 		}
 	}
 
-	JSQ.connect(m_top_widget,'download_study',O,save_changes);
+	JSQ.connect(m_top_widget,'download_study',O,download_study);
 	function download_study() {
 		var obj=m_mls_manager.study().object();
 		var content=JSON.stringify(obj,null,4);
@@ -186,7 +186,8 @@ function set_document_content_to_docstor(DSC,doc_id,content,callback) {
 
 function download_document_content_from_docstor(DSC,owner,title,callback) {
     var query={owned_by:owner,filter:{"attributes.title":title}};
-    query.and_shared_with='[public]';
+    if (DSC.user()!=owner)
+    	query.and_shared_with=DCS.user();
     DSC.findDocuments(query,function(err,docs) {
         if (err) {
             callback('Problem finding document: '+err);
@@ -225,7 +226,7 @@ function MLSTopWidget(O) {
 	if (window.mlpipeline_mode!='local') {
 		var link0=$('<button>Download study</button>');
 		m_content.append(link0);
-		link0.click(O.emit('download_study'));
+		link0.click(function() {console.log('aaa'); O.emit('download_study');});
 	}
 	O.div().append(m_content);
 
