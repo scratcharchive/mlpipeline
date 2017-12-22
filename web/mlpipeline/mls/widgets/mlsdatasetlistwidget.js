@@ -94,7 +94,7 @@ function MLSDatasetListWidget(O) {
 	function add_dataset() {
 		var dataset_id=prompt('Dataset ID:');
 		if (!dataset_id) return;
-		m_study.addDataset(dataset_id);
+		m_study.setDataset(dataset_id,new MLSDataset());
 		refresh();
 		set_current_row_by_dataset_id(dataset_id);
 	}

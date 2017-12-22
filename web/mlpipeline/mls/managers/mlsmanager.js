@@ -8,7 +8,7 @@ function MLSManager() {
 function MLStudy(O) {
   O=O||this;
   JSQObject(O);
-  
+
   var that=this;
   
   this.object=function() {return JSQ.clone(m_object);};
@@ -127,8 +127,9 @@ function MLSDataset(obj) {
   this.fileNames=function() {return fileNames();};
   this.file=function(name) {return file(name);};
   this.setFile=function(name,file0) {return setFile(name,file0);};
+  this.removeFile=function(name) {removeFile(name);};
   this.parameters=function() {return JSQ.clone(m_object.parameters||{});};
-  this.setParameters=function(params) {m_object.parameters=JSQ.clone(parms);};
+  this.setParameters=function(params) {m_object.parameters=JSQ.clone(params);};
   this.properties=function() {return JSQ.clone(m_object.properties||{});};
   this.setProperties=function(props) {m_object.properties=JSQ.clone(props);};
 
@@ -149,6 +150,12 @@ function MLSDataset(obj) {
   function setFile(name,file0) {
     if (!m_object.files) m_object.files={};
     m_object.files[name]=JSQ.clone(file0);
+  }
+  function removeFile(name) {
+    if (!m_object.files) m_object.files={};
+    if (name in m_object.files) {
+      delete m_object.files[name];
+    }
   }
 
   that.setObject(obj||{});

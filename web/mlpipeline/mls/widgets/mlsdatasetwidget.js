@@ -249,7 +249,7 @@ function MLSDatasetWidget(O) {
 		if (!name) return;
 		var ds=get_dataset();
 		if (!ds) return;
-		ds.addFile(name,{});
+		ds.setFile(name,{});
 		set_dataset(ds);
 		refresh();
 		upload_prv_file(name);
@@ -267,7 +267,10 @@ function MLSDatasetWidget(O) {
 		if (confirm('Remove this parameter?')) {
 			var ds=get_dataset();
 			if (!ds) return;
-			ds.removeParameter(name);
+			var pp=ds.parameters();
+			if (name in pp)
+				delete pp[name];
+			ds.setParameters(pp);
 			set_dataset(ds);
 			refresh();
 		}
@@ -501,6 +504,7 @@ function DescriptionWidget(O) {
 	function edit_description() {
 		var dlg=new EditTextDlg();
 		dlg.setLabel('Edit description');
+		dlg.setText(description());
 		JSQ.connect(dlg,'accepted',O,function() {
 			setDescription(dlg.text());
 			O.emit('description-edited');
