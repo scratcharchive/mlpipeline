@@ -118,6 +118,17 @@ function jsqmain(query) {
             });
             return;
         }
+        else if (window.mls_file_content) {
+            var Y=new MLSWidget();
+            var obj=try_parse_json(window.mls_file_content);
+            if (!obj) {
+                alert('Unable to parse mls file content');
+                return;
+            }
+            Y.setMLSObject(obj);
+            Y.showFullBrowser();
+            return;
+        }
         var X=new MainWindow(null,{local_mode:local_mode});
         X.setDocStorClient(DSC);
         
@@ -265,6 +276,15 @@ function show_full_browser_message(msg,submessage) {
     X.setMessage(msg);
     X.setSubmessage(submessage);
     X.showFullBrowser();
+}
+
+function try_parse_json(str) {
+    try {
+        return JSON.parse(str);
+    }
+    catch(err) {
+        return null;
+    }
 }
 
 //window.callbacks={};
