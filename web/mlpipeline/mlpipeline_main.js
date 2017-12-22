@@ -313,7 +313,7 @@ function jsqmain_mls(query) {
             });
         }
         else {
-            Y.loadFromDocStor(query.owner,query,docstor,function(err) {
+            Y.loadFromDocStor(query.owner,query.docstor,function(err) {
                 if (err) {
                     alert(err);
                     return;
