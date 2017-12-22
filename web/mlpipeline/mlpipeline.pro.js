@@ -38,15 +38,15 @@ opts.SCRIPTS.push(
 //////////////////////////////////////////////////////////////////////
 opts.TARGET = 'index.html';
 opts.SCRIPTS.push(
-	'mlpipeline_main.js','mlpipeline.js','editmlpipelinewidget.js',
-	'mltablewidget.js','kuleleclient.js','editmlpipelinetablewidget.js',
-	'mlpdocument.js','jobmanager.js','docstorclient.js'
+	'mlpipeline_main.js','mlpipeline.js',
+	'kuleleclient.js','mlpdocument.js','docstorclient.js'
 );
-opts.STYLESHEETS.push('editmlpipelinewidget.css','create.css');
+opts.STYLESHEETS.push('create.css');
 
 opts.SOURCEPATH.push('widgets')
 opts.SCRIPTS.push(
-	'prvlistwidget.js','newstepdialog.js',
+	'mltablewidget.js','editmlpipelinetablewidget.js','editmlpipelinewidget.js',
+	'prvlistwidget.js','newstepdialog.js','editmlpipelinewidget.css',
 	'mainwindow.js','mainmenu.js','statusbar.js','viewlistwidget.js',
 	'googledrive.js','greetingwindow.js','editstepdialog.js','mlpipelinelistwidget.js',
 	'importpipelinesdialog.js','textfilewindow.js','chooselogindlg.js',
@@ -56,7 +56,8 @@ opts.SCRIPTS.push(
 
 opts.SOURCEPATH.push('managers')
 opts.SCRIPTS.push(
-	'prvlistmanager.js','processormanager.js','mlpipelinelistmanager.js','remotefilemanager.js'
+	'prvlistmanager.js','processormanager.js','mlpipelinelistmanager.js',
+	'remotefilemanager.js','jobmanager.js'
 );
 
 opts.SOURCEPATH.push('jsutils')
