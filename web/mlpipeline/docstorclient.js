@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+if (typeof module !== 'undefined' && module.exports) {
+	//using nodejs
+	exports.DocStorClient=DocStorClient;
+
+	jsu_http_post_json=nodejs_http_post_json;
+}
+
 function DocStorClient() {
 
 	this.login=function(info,callback) {login(info,callback);};
@@ -231,4 +238,77 @@ function DocStorClient() {
 
 function clone(obj) {
 	return JSON.parse(JSON.stringify(obj));
+}
+
+function nodejs_http_post_json(url,data,headers,callback) {
+	if (!callback) {
+		callback=headers;
+		headers=null;
+	}
+
+	var post_data=JSON.stringify(data);
+
+	var url_parts=require('url').parse(url);
+
+	var options={
+		method: "POST",
+		//url: url
+		hostname: url_parts.host,
+		path:url_parts.path
+	};
+
+	var http_module;
+	if (url_parts.protocol=='https:')
+		http_module=require('https');
+	else if (url_parts.protocol=='http:')
+		http_module=require('http');
+	else {
+		if (callback)
+			callback({success:false,error:'invalid protocol for url: '+url});
+		return;
+	}
+
+
+	/*
+	var options = {
+	  hostname: 'posttestserver.com',
+	  port: 443,
+	  path: '/post.php',
+	  method: 'POST',
+	  headers: {
+	       'Content-Type': 'application/x-www-form-urlencoded',
+	       'Content-Length': postData.length
+	     }
+	};
+	*/
+
+	if (headers) {
+		options.headers=headers;
+	}
+
+	var req=http_module.request(options,function(res) {
+		var txt='';
+		res.on('data', function(d) {
+			txt+=d
+		});
+		req.on('error', function(e) {
+		  if (callback) callback({success:false,error:'Error in post: '+e});
+		  callback=null;
+		});
+		res.on('end', function() {
+			var obj;
+			try {
+				obj=JSON.parse(txt);
+			}
+			catch(err) {
+				if (callback) callback({success:false,error:'Error parsing json response'});
+				callback=null;
+				return;
+			}
+			if (callback) callback({success:true,object:obj});
+			callback=null;
+		});
+	});
+	req.write(post_data);
+	req.end();
 }

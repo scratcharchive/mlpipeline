@@ -24,12 +24,18 @@ if (typeof module !== 'undefined' && module.exports) {
 	};
 
 	function nodejs_http_get_text(url,headers,callback) {
-		if (!callback) {
-			callback=headers;
-			headers=null;
-		}
-		callback({success:false,error:'nodejs_http_get_text not implemented yet: '+url});
-	}
+            if (!callback) {
+                    callback=headers;
+                    headers=null;
+            }
+            require('request').get({url:url,headers:headers},function(err,response,body) {
+                    if (err) {
+                            if (callback) callback({success:false,error:err.message});
+                            return;
+                    }
+                    if (callback) callback({success:true,text:body});
+            });
+    }
 	function nodejs_http_get_json(url,headers,callback) {
 		if (!callback) {
 			callback=headers;

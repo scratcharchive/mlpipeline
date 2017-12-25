@@ -807,7 +807,7 @@ function directory_listing(folder,recursive) {
 		var path0=folder+'/'+filenames[i];
 		if (require('fs').statSync(path0).isDirectory()) {
 			if (recursive) {
-				var tmp=directory_listing(path0);
+				var tmp=directory_listing(path0,recursive);
 				for (var j=0; j<tmp.length; j++) {
 					ret.push(filenames[i]+'/'+tmp[j]);
 				}
