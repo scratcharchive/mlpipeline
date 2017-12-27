@@ -28,8 +28,8 @@ if (typeof module !== 'undefined' && module.exports) {
 	btoa=function(str) {return new Buffer(str).toString('base64');};
 	mlpLog=function() {}; //so that we don't get an exception
 
-	//JSQObject=require('./jsq/src/jsqcore/jsqobject.js').JSQObject;
-	//JSQ=require('./jsq/src/jsqcore/jsq.js').JSQ;
+	JSQObject=require('./jsq/src/jsqcore/jsqobject.js').JSQObject;
+	JSQ=require('./jsq/src/jsqcore/jsq.js').JSQ;
 
 }
 
