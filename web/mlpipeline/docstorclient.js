@@ -309,6 +309,12 @@ function nodejs_http_post_json(url,data,headers,callback) {
 			callback=null;
 		});
 	});
+
+	req.on('error', (e) => {
+		if (callback) callback({success:false,error:'problem with request: '+e.message});
+		callback=null;
+	});
+
 	req.write(post_data);
 	req.end();
 }
