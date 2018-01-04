@@ -310,7 +310,7 @@ function nodejs_http_post_json(url,data,headers,callback) {
 		});
 	});
 
-	req.on('error', (e) => {
+	req.on('error', function(e) {
 		if (callback) callback({success:false,error:'problem with request: '+e.message});
 		callback=null;
 	});
