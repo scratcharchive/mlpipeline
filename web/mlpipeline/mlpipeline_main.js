@@ -117,7 +117,6 @@ function jsqmain(query) {
             Y.setScript(window.js_file_content);
             Y.showFullBrowser();
             Y.onSaved(function() {
-                console.log('onSaved');
                 download(Y.script(),'',window.js_file_path);
                 mlpinterface.quit();
             });
@@ -270,7 +269,6 @@ function jsqmain_mls(query) {
 
     if (local_mode) {
         window.download=function(text,doc_name,path) {
-            console.log('test');
             mlpinterface.download(text,path||''); //send it back to the C++
         }
         window.open=function(url,target) {
