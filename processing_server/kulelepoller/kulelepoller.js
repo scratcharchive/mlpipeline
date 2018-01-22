@@ -365,7 +365,7 @@ function http_get_text(url,callback) {
 			chunks.push(body);
 		});
 		res.on('end',function() {
-			var text=chunks.join();
+			var text=chunks.join('');
 			callback({success:true,text:text});
 		});
 	});
@@ -453,13 +453,14 @@ function http_post_json(url,data,onclose,callback) {
 			chunks.push(body);
 		});
 		res.on('end',function() {
-			var body=chunks.join();
+			var text=chunks.join('');
+			//var body=chunks.join('');
 			var obj;
 			try {
-				obj=JSON.parse(body);
+				obj=JSON.parse(text);
 			}
 			catch(err) {
-				callback({success:false,error:'Problem parsing json response: '+body});
+				callback({success:false,error:'Problem parsing json response: '+text});
 				return;
 			}
 			callback({success:true,object:obj});
