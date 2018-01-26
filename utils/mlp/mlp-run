@@ -145,8 +145,6 @@ function step2() {
 	}
 
 	var spec0=subpipeline.spec();
-	//console.log(spec0);
-	//return;
 
 	pipeline0=new MLPipeline();
 	var parameters0={};
