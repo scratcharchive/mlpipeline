@@ -100,7 +100,15 @@ function QueuedJob() {
 	function start(processor_name,inputs,outputs,parameters,resources,opts,callback) {
 		request_fname=make_tmp_json_file(hopts.data_directory);
 		response_fname=make_tmp_json_file(hopts.data_directory);
-		mpreq={action:'queue_process',processor_name:processor_name,inputs:inputs,outputs:outputs,parameters:parameters,resources:resources,package_uri:opts.package_uri||''};
+		mpreq={
+			action:'queue_process',
+			processor_name:processor_name,
+			inputs:inputs,
+			outputs:outputs,
+			parameters:parameters,
+			resources:resources,
+			package_uri:opts.package_uri||''
+		};
 		if (!write_text_file(request_fname,JSON.stringify(mpreq))) {
 			callback({success:false,error:'Problem writing mpreq to file'});
 			return;
