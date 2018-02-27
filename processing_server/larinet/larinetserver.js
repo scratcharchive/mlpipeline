@@ -224,7 +224,7 @@ function QueuedJob() {
 				return false;
 			}
 		}
-		return true;
+		return true;close
 	}
 }
 
@@ -470,7 +470,6 @@ function larinetserver(req,onclose,callback) {
 		J.keepAlive();
 		var resp=make_response_for_J(process_id,J);
 		callback(resp);
-		
 	}
 	function cancel_process(query,callback) {
 		var process_id=query.process_id||'';
